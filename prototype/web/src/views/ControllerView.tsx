@@ -49,7 +49,7 @@ export function ControllerView({ sections, onChanged }: Props) {
   }, [explainOpen, explainPick, strict, urgency, result])
 
   async function defer(rid: string) {
-    await api.defer(rid, 'controller')
+    await api.defer(rid)
     onChanged()
     run()
   }
@@ -57,8 +57,8 @@ export function ControllerView({ sections, onChanged }: Props) {
   async function publish() {
     setPublishing(true)
     try {
-      const { id } = await api.createPlan(strict, urgency, 'controller')
-      await api.publish(id, 'controller')
+      const { id } = await api.createPlan(strict, urgency)
+      await api.publish(id)
       setPublished(`Published as plan #${id}. Departments can now see it.`)
       onChanged()
       setTimeout(() => setPublished(null), 4000)

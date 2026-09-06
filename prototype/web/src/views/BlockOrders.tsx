@@ -55,12 +55,12 @@ export function BlockOrders() {
             </table>
           </div>
 
-          <a
-            href={api.exportCsvUrl()}
+          <button
+            onClick={() => api.exportCsv()}
             className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
           >
             <Download size={14} /> Download as CSV
-          </a>
+          </button>
         </>
       )}
     </div>

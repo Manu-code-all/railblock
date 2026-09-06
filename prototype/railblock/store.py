@@ -15,8 +15,10 @@ takes. Nothing in the solver had to change.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import secrets
 import sqlite3
 from contextlib import contextmanager
 from dataclasses import asdict
@@ -107,6 +109,20 @@ CREATE TABLE IF NOT EXISTS activity (
     action  TEXT NOT NULL,
     detail  TEXT NOT NULL DEFAULT ''
 );
+
+CREATE TABLE IF NOT EXISTS users (
+    username      TEXT PRIMARY KEY,
+    display_name  TEXT NOT NULL,
+    dept          TEXT,                 -- ENGG | S&T | TRD | NULL (controller)
+    salt          TEXT NOT NULL,
+    password_hash TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+    token       TEXT PRIMARY KEY,
+    username    TEXT NOT NULL REFERENCES users(username),
+    created_at  TEXT NOT NULL
+);
 """
 
 
@@ -142,6 +158,69 @@ def activity(limit: int = 100, path=None) -> list[dict]:
         rows = con.execute(
             "SELECT * FROM activity ORDER BY id DESC LIMIT ?", (limit,))
         return [dict(r) for r in rows]
+
+
+# ══════════════════════════════════════════════════════════════════
+#  Accounts — real login, not just role selection
+#
+#  Passwords are hashed with PBKDF2-HMAC-SHA256 (stdlib `hashlib`, no
+#  extra dependency to install the night before a demo). A session is
+#  just a random opaque token stored server-side; the client only ever
+#  holds the token, never the password.
+# ══════════════════════════════════════════════════════════════════
+_PBKDF2_ITERATIONS = 200_000
+
+
+def _hash_password(password: str, salt: str) -> str:
+    return hashlib.pbkdf2_hmac(
+        "sha256", password.encode(), salt.encode(), _PBKDF2_ITERATIONS
+    ).hex()
+
+
+def create_user(username: str, password: str, dept: str | None,
+                display_name: str, path=None) -> None:
+    salt = secrets.token_hex(16)
+    with connect(path) as con:
+        con.execute(
+            "INSERT OR REPLACE INTO users "
+            "(username, display_name, dept, salt, password_hash) "
+            "VALUES (?,?,?,?,?)",
+            (username, display_name, dept, salt, _hash_password(password, salt)))
+
+
+def verify_login(username: str, password: str, path=None) -> dict | None:
+    with connect(path) as con:
+        row = con.execute(
+            "SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+    if row is None:
+        return None
+    if _hash_password(password, row["salt"]) != row["password_hash"]:
+        return None
+    return {"username": row["username"], "display_name": row["display_name"],
+            "dept": row["dept"]}
+
+
+def create_session(username: str, path=None) -> str:
+    token = secrets.token_urlsafe(32)
+    with connect(path) as con:
+        con.execute(
+            "INSERT INTO sessions (token, username, created_at) VALUES (?,?,?)",
+            (token, username, _now()))
+    return token
+
+
+def get_session(token: str, path=None) -> dict | None:
+    with connect(path) as con:
+        row = con.execute(
+            "SELECT u.username, u.display_name, u.dept FROM sessions s "
+            "JOIN users u ON u.username = s.username WHERE s.token = ?",
+            (token,)).fetchone()
+    return dict(row) if row else None
+
+
+def delete_session(token: str, path=None) -> None:
+    with connect(path) as con:
+        con.execute("DELETE FROM sessions WHERE token = ?", (token,))
 
 
 # ══════════════════════════════════════════════════════════════════

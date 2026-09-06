@@ -15,10 +15,11 @@ from __future__ import annotations
 
 import csv
 import io
+import time
 from dataclasses import asdict
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -55,16 +56,89 @@ def _section_name(sid: str) -> str:
 
 
 # ══════════════════════════════════════════════════════════════════
+#  Auth — a real login, enforced server-side, not just hidden in the UI
+#
+#  The client holds an opaque bearer token, nothing else. Every mutating
+#  endpoint below trusts the *session's* department, never one the client
+#  claims in the request body — so logging in as Engineering makes it
+#  impossible to submit, withdraw or defer as another department, even by
+#  calling the API directly.
+# ══════════════════════════════════════════════════════════════════
+class LoginBody(BaseModel):
+    username: str
+    password: str
+
+
+def current_user(authorization: Optional[str] = Header(None)) -> dict:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(401, "Log in to continue.")
+    user = store.get_session(authorization.removeprefix("Bearer ").strip())
+    if not user:
+        raise HTTPException(401, "Session expired — log in again.")
+    return user
+
+
+def require_controller(user: dict = Depends(current_user)) -> dict:
+    if user["dept"] is not None:
+        raise HTTPException(403, "Only the section controller can do this.")
+    return user
+
+
+def require_department(user: dict = Depends(current_user)) -> dict:
+    if user["dept"] is None:
+        raise HTTPException(403, "Departments only — the controller does not submit requests.")
+    return user
+
+
+_LOGIN_ATTEMPT_LIMIT = 5
+_LOGIN_WINDOW_SECONDS = 60
+_failed_logins: dict[str, list[float]] = {}
+
+
+def _check_login_rate_limit(username: str) -> None:
+    now = time.monotonic()
+    recent = [t for t in _failed_logins.get(username, [])
+             if now - t < _LOGIN_WINDOW_SECONDS]
+    _failed_logins[username] = recent
+    if len(recent) >= _LOGIN_ATTEMPT_LIMIT:
+        raise HTTPException(
+            429, f"Too many failed attempts for '{username}'. "
+                 f"Wait a minute and try again.")
+
+
+@app.post("/api/login")
+def login(body: LoginBody):
+    _check_login_rate_limit(body.username)
+    user = store.verify_login(body.username, body.password)
+    if not user:
+        _failed_logins.setdefault(body.username, []).append(time.monotonic())
+        raise HTTPException(401, "Wrong username or password.")
+    _failed_logins.pop(body.username, None)
+    token = store.create_session(user["username"])
+    return {"token": token, **user}
+
+
+@app.post("/api/logout")
+def logout(authorization: Optional[str] = Header(None)):
+    if authorization and authorization.startswith("Bearer "):
+        store.delete_session(authorization.removeprefix("Bearer ").strip())
+    return {"ok": True}
+
+
+@app.get("/api/me")
+def me(user: dict = Depends(current_user)):
+    return user
+
+
+# ══════════════════════════════════════════════════════════════════
 #  Requests / models
 # ══════════════════════════════════════════════════════════════════
 class NewRequest(BaseModel):
-    dept: str
     section: str
     title: str
     duration: int
     priority: int
     deadline_day: int
-    actor: str
 
 
 class SolveParams(BaseModel):
@@ -76,20 +150,16 @@ class ExplainParams(SolveParams):
     rid: str
 
 
-class PublishParams(BaseModel):
-    actor: str
-
-
 # ══════════════════════════════════════════════════════════════════
 #  Corridor / meta
 # ══════════════════════════════════════════════════════════════════
 @app.get("/api/windows")
-def windows():
+def windows(user: dict = Depends(current_user)):
     return [asdict(w) for w in store.windows()]
 
 
 @app.get("/api/meta")
-def meta():
+def meta(user: dict = Depends(current_user)):
     sections = store.sections()
     windows = store.windows()
     pub = store.published_plan()
@@ -107,20 +177,23 @@ def meta():
 #  Requests
 # ══════════════════════════════════════════════════════════════════
 @app.get("/api/requests")
-def list_requests(dept: Optional[str] = None, status: Optional[str] = None):
+def list_requests(status: Optional[str] = None, user: dict = Depends(current_user)):
+    # A department account only ever sees its own requests, enforced here —
+    # not just hidden in the UI. The controller sees everything.
+    dept = user["dept"]
     return store.list_requests(dept=dept, status=status)
 
 
 @app.post("/api/requests")
-def submit_request(body: NewRequest):
+def submit_request(body: NewRequest, user: dict = Depends(require_department)):
     if not body.title.strip():
         raise HTTPException(400, "Give the work a title.")
     windows = [w for w in store.windows() if w.section == body.section]
     longest = max((w.length for w in windows), default=0)
     rid = store.add_request(
-        dept=body.dept, section=body.section, title=body.title.strip(),
+        dept=user["dept"], section=body.section, title=body.title.strip(),
         duration=body.duration, priority=body.priority,
-        deadline_day=body.deadline_day, submitted_by=body.actor)
+        deadline_day=body.deadline_day, submitted_by=user["username"])
     warning = None
     if longest < body.duration:
         warning = (f"No window on this section is longer than {longest} "
@@ -129,14 +202,17 @@ def submit_request(body: NewRequest):
 
 
 @app.delete("/api/requests/{rid}")
-def withdraw_request(rid: str, actor: str):
-    store.delete_request(rid, actor)
+def withdraw_request(rid: str, user: dict = Depends(require_department)):
+    row = next((r for r in store.list_requests(dept=user["dept"]) if r["id"] == rid), None)
+    if row is None:
+        raise HTTPException(404, "That request isn't yours to withdraw.")
+    store.delete_request(rid, user["username"])
     return {"ok": True}
 
 
 @app.post("/api/requests/{rid}/defer")
-def defer_request(rid: str, actor: str):
-    store.set_status([rid], "deferred", actor)
+def defer_request(rid: str, user: dict = Depends(require_controller)):
+    store.set_status([rid], "deferred", user["username"])
     return {"ok": True}
 
 
@@ -184,7 +260,7 @@ def _solution_json(sc, sol):
 
 
 @app.post("/api/solve")
-def run_solve(params: SolveParams):
+def run_solve(params: SolveParams, user: dict = Depends(require_controller)):
     sc, sol = _solve(params)
     if not sc.requests:
         raise HTTPException(409, "No requests to plan.")
@@ -192,7 +268,7 @@ def run_solve(params: SolveParams):
 
 
 @app.post("/api/explain")
-def run_explain(params: ExplainParams):
+def run_explain(params: ExplainParams, user: dict = Depends(require_controller)):
     sc, sol = _solve(SolveParams(strict=params.strict, urgency=params.urgency))
     why = explain_mod.explain(sc, sol, params.rid)
     return {
@@ -208,24 +284,24 @@ def run_explain(params: ExplainParams):
 #  Plans
 # ══════════════════════════════════════════════════════════════════
 @app.post("/api/plans")
-def create_plan(params: SolveParams, actor: str):
+def create_plan(params: SolveParams, user: dict = Depends(require_controller)):
     days = _horizon()
     sc = store.to_scenario(days=days)
     sol = solve(sc, strict=params.strict, urgency=params.urgency)
     if not sol.ok:
         raise HTTPException(409, "Solution is infeasible — cannot save a plan.")
-    pid = store.save_plan(sol, days, params.urgency, params.strict, actor)
+    pid = store.save_plan(sol, days, params.urgency, params.strict, user["username"])
     return {"id": pid}
 
 
 @app.post("/api/plans/{pid}/publish")
-def publish_plan(pid: int, body: PublishParams):
-    store.publish_plan(pid, body.actor)
+def publish_plan(pid: int, user: dict = Depends(require_controller)):
+    store.publish_plan(pid, user["username"])
     return {"ok": True}
 
 
 @app.get("/api/plans/published")
-def published():
+def published(user: dict = Depends(current_user)):
     pub = store.published_plan()
     if not pub:
         return {"plan": None, "blocks": []}
@@ -239,7 +315,7 @@ def published():
 
 
 @app.get("/api/export/csv")
-def export_csv():
+def export_csv(user: dict = Depends(current_user)):
     pub = store.published_plan()
     if not pub:
         raise HTTPException(404, "No block order published yet.")
@@ -266,5 +342,5 @@ def export_csv():
 #  Activity
 # ══════════════════════════════════════════════════════════════════
 @app.get("/api/activity")
-def activity(limit: int = 200):
+def activity(limit: int = 200, user: dict = Depends(require_controller)):
     return store.activity(limit=limit)

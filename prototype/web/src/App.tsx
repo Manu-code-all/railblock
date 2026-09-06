@@ -1,24 +1,44 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { api } from './api'
-import { ROLES, Sidebar } from './components/Sidebar'
-import type { Dept, Meta } from './types'
+import { Sidebar } from './components/Sidebar'
+import type { Meta, Session } from './types'
 import { ActivityLog } from './views/ActivityLog'
 import { BlockOrders } from './views/BlockOrders'
 import { ControllerView } from './views/ControllerView'
 import { DepartmentView } from './views/DepartmentView'
+import { Login } from './views/Login'
 
 const CONTROLLER_TABS = ['Plan the corridor', 'Block orders', 'Activity log'] as const
 
 export default function App() {
-  const [role, setRole] = useState('Engineering (P.Way)')
+  const [session, setSession] = useState<Session | null | 'checking'>('checking')
   const [meta, setMeta] = useState<Meta | null>(null)
   const [tab, setTab] = useState<typeof CONTROLLER_TABS[number]>('Plan the corridor')
 
-  const refresh = () => { api.meta().then(setMeta) }
-  useEffect(() => { refresh() }, [])
+  useEffect(() => {
+    if (!api.isLoggedIn()) { setSession(null); return }
+    api.me().then(setSession).catch(() => setSession(null))
+  }, [])
 
-  const dept = ROLES.find((r) => r.label === role)?.dept ?? null
+  const refresh = () => { api.meta().then(setMeta) }
+  useEffect(() => {
+    if (session && session !== 'checking') refresh()
+  }, [session])
+
+  async function logout() {
+    await api.logout()
+    setSession(null)
+    setMeta(null)
+  }
+
+  if (session === 'checking') {
+    return <div className="flex h-screen items-center justify-center text-[var(--ink-soft)]">Loading…</div>
+  }
+
+  if (!session) {
+    return <Login onLoggedIn={setSession} />
+  }
 
   if (!meta) {
     return <div className="flex h-screen items-center justify-center text-[var(--ink-soft)]">Loading…</div>
@@ -43,15 +63,15 @@ export default function App() {
   return (
     <div className="flex h-screen">
       <Sidebar
-        role={role} setRole={setRole}
+        user={session} onLogout={logout}
         sectionCount={meta.sectionCount} days={meta.days}
         pendingCount={meta.pendingCount}
         publishedPlanId={meta.published?.id ?? null}
       />
       <main className="flex-1 overflow-y-auto">
-        {dept ? (
+        {session.dept ? (
           <DepartmentView
-            key={dept} dept={dept as Dept} roleLabel={role}
+            key={session.dept} dept={session.dept} roleLabel={session.display_name}
             sections={meta.sections} days={meta.days} onChanged={refresh}
           />
         ) : (

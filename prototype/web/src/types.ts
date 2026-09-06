@@ -1,5 +1,15 @@
 export type Dept = 'ENGG' | 'S&T' | 'TRD'
 
+export interface User {
+  username: string
+  display_name: string
+  dept: Dept | null
+}
+
+export interface Session extends User {
+  token: string
+}
+
 export interface Section {
   id: string
   name: string

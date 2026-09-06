@@ -4,8 +4,6 @@ import { api } from '../api'
 import { StatusPill } from '../components/Pill'
 import type { Dept, RequestRow, Section } from '../types'
 
-const ACTOR: Record<string, string> = { ENGG: 'p.way', 'S&T': 'snt', TRD: 'ohe' }
-
 interface Props {
   dept: Dept
   roleLabel: string
@@ -27,7 +25,7 @@ export function DepartmentView({ dept, roleLabel, sections, days, onChanged }: P
   const [toast, setToast] = useState<string | null>(null)
 
   const load = () => {
-    api.requests(dept).then(setRows)
+    api.requests().then(setRows)
     api.published().then(setPublished)
   }
   useEffect(load, [dept])
@@ -43,8 +41,8 @@ export function DepartmentView({ dept, roleLabel, sections, days, onChanged }: P
     e.preventDefault()
     if (!title.trim()) return
     const res = await api.submit({
-      dept, section, title: title.trim(), duration, priority,
-      deadline_day: deadline, actor: ACTOR[dept],
+      section, title: title.trim(), duration, priority,
+      deadline_day: deadline,
     })
     setWarning(res.warning)
     setToast(`Submitted as ${res.id}.`)
@@ -177,7 +175,7 @@ export function DepartmentView({ dept, roleLabel, sections, days, onChanged }: P
               <StatusPill status={r.status} />
               {r.status === 'pending' ? (
                 <button
-                  onClick={() => api.withdraw(r.id, ACTOR[dept]).then(() => { load(); onChanged() })}
+                  onClick={() => api.withdraw(r.id).then(() => { load(); onChanged() })}
                   className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-[var(--ink-soft)] hover:bg-slate-50"
                 >
                   Withdraw

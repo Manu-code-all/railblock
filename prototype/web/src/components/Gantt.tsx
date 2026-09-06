@@ -20,7 +20,7 @@ export function Gantt({ sections, windows, blocks, days }: Props) {
   const x = (m: number) => LABEL_W + m * PX_PER_MIN
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+    <div className="overflow-x-auto rounded-[12px] border border-[var(--hairline)] bg-[var(--surface-1)]">
       <svg
         viewBox={`0 0 ${width} ${height}`}
         style={{ minWidth: width }}
@@ -33,12 +33,12 @@ export function Gantt({ sections, windows, blocks, days }: Props) {
             <line
               x1={x(d * DAY)} x2={x(d * DAY)}
               y1={HEAD_H} y2={height - 4}
-              stroke="#EEF1F6" strokeWidth={1}
+              stroke="#e4e4e7" strokeWidth={1}
             />
             {d < days && (
               <text
                 x={x(d * DAY) + 4} y={16}
-                fontSize={10.5} fontFamily="IBM Plex Mono" fill="#94A2B8"
+                fontSize={10.5} fontFamily="IBM Plex Mono" fill="#9a9ca1"
               >
                 Day {d}
               </text>
@@ -55,11 +55,11 @@ export function Gantt({ sections, windows, blocks, days }: Props) {
             <g key={s.id}>
               <text
                 x={0} y={y + ROW_H / 2 + 4}
-                fontSize={12} fontWeight={600} fill="#16202E"
+                fontSize={12} fontWeight={600} fill="#17181a"
               >
                 {s.name.length > 22 ? s.name.slice(0, 21) + '…' : s.name}
               </text>
-              <line x1={0} x2={width} y1={y + ROW_H} y2={y + ROW_H} stroke="#F1F3F7" />
+              <line x1={0} x2={width} y1={y + ROW_H} y2={y + ROW_H} stroke="#eeeef0" />
 
               {rowWindows.map((w) => (
                 <rect

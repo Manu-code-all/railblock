@@ -46,13 +46,13 @@ export default function App() {
 
   if (meta.sectionCount === 0) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[var(--bg)]">
-        <div className="max-w-md rounded-xl border border-slate-200 bg-white px-8 py-8 text-center">
-          <h1 className="text-xl font-extrabold text-[var(--ink)]">RailBlock</h1>
+      <div className="flex h-screen items-center justify-center bg-[var(--canvas)]">
+        <div className="max-w-md rounded-[12px] border border-[var(--hairline)] bg-[var(--surface-1)] px-8 py-8 text-center">
+          <h1 className="text-xl font-semibold tracking-[-0.4px] text-[var(--ink)]">RailBlock</h1>
           <p className="mt-2 text-sm text-[var(--ink-soft)]">
             No corridor is loaded, so there is nothing to plan yet.
           </p>
-          <code className="mono mt-4 block rounded-lg bg-slate-100 px-3 py-2 text-xs">
+          <code className="mono mt-4 block rounded-[8px] bg-[var(--surface-2)] px-3 py-2 text-xs text-[var(--ink-muted)]">
             python -m railblock.seed
           </code>
         </div>
@@ -76,19 +76,19 @@ export default function App() {
           />
         ) : (
           <>
-            <div className="sticky top-0 z-10 border-b border-slate-200 bg-[var(--bg)]/90 px-8 backdrop-blur">
+            <div className="sticky top-0 z-10 border-b border-[var(--hairline)] bg-[var(--canvas)]/90 px-8 backdrop-blur">
               <div className="mx-auto flex max-w-5xl gap-1">
                 {CONTROLLER_TABS.map((t) => (
                   <button
                     key={t}
                     onClick={() => setTab(t)}
-                    className={`relative px-3 py-3 text-sm font-semibold transition-colors ${
-                      tab === t ? 'text-[var(--navy)]' : 'text-[var(--ink-faint)] hover:text-[var(--ink-soft)]'
+                    className={`relative px-3 py-3 text-sm font-medium transition-colors ${
+                      tab === t ? 'text-[var(--ink)]' : 'text-[var(--ink-faint)] hover:text-[var(--ink-soft)]'
                     }`}
                   >
                     {t}
                     {tab === t && (
-                      <motion.div layoutId="tab-underline" className="absolute inset-x-0 -bottom-px h-0.5 bg-[var(--navy)]" />
+                      <motion.div layoutId="tab-underline" className="absolute inset-x-0 -bottom-px h-0.5 bg-[var(--lavender)]" />
                     )}
                   </button>
                 ))}

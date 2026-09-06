@@ -1,23 +1,33 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 :root {
-  --bg: #F5F6F8;
-  --surface: #FFFFFF;
-  --surface-2: #FAFBFC;
-  --ink: #16202E;
-  --ink-soft: #5B6B82;
-  --ink-faint: #94A2B8;
-  --line: #E4E8EF;
+  /* Linear's surface ladder, inverted to light — page recedes, cards lift to white */
+  --canvas: #f6f6f7;
+  --surface-1: #ffffff;
+  --surface-2: #f2f2f4;
+  --surface-3: #e9e9ec;
+  --hairline: #e4e4e7;
+  --hairline-strong: #d4d4d9;
 
-  --navy: #1F3864;
-  --navy-ink: #14264A;
+  --ink: #17181a;
+  --ink-muted: #4a4c50;
+  --ink-soft: #74767b;
+  --ink-faint: #9a9ca1;
+
+  /* Linear's single chromatic accent — reserved for CTAs, focus, brand */
+  --lavender: #5e6ad2;
+  --lavender-hover: #4550b8;
+  --lavender-focus: #5e69d1;
+
+  /* RailBlock's own semantic layer — department + status, tuned to read on light */
+  --navy: var(--lavender);
   --blue: #2E6DA4;
   --green: #1E8449;
   --amber: #B8790A;
   --red: #C0392B;
 
-  --chip-bg: #EEF1F6;
+  --chip-bg: var(--surface-2);
 }
 
 * { box-sizing: border-box; }
@@ -26,10 +36,16 @@ html, body, #root { height: 100%; }
 
 body {
   margin: 0;
-  background: var(--bg);
+  background: var(--canvas);
   color: var(--ink);
-  font-family: 'Manrope', -apple-system, 'Segoe UI', sans-serif;
+  font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
   font-feature-settings: 'ss01' on;
+  letter-spacing: -0.05px;
+}
+
+h1, h2, .display {
+  font-weight: 600;
+  letter-spacing: -0.6px;
 }
 
 .mono {
@@ -38,8 +54,14 @@ body {
 }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: #D3D9E3; border-radius: 8px; }
+::-webkit-scrollbar-thumb { background: var(--hairline-strong); border-radius: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+::selection { background: var(--lavender); color: white; }
+
+input, select, textarea {
+  color-scheme: light;
+}
 
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(6px); }

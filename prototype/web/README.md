@@ -60,6 +60,24 @@ directly. Solving, deferring and publishing all require a controller session.
 See [`docs/03-security-and-access.md`](../../docs/03-security-and-access.md)
 for exactly where this model does and doesn't reach production-grade.
 
+## Design system
+
+The UI follows Linear's actual design system — a four-step surface ladder for
+card hierarchy (Linear's own is dark; this app runs the same structure
+inverted to light, cards lifting to white off a soft gray canvas), lavender
+(`#5e6ad2`) as the single chromatic accent reserved for the brand mark/CTAs/
+focus rings, Inter as the free substitute for Linear's proprietary typeface,
+and IBM Plex Mono for ticket IDs and other data tokens. The reference doc
+that was analyzed to produce this — a full breakdown of Linear's colors,
+type scale, spacing, component specs, and explicit do's/don'ts — is checked
+in at `.design-ref/linear-DESIGN.md`, sourced from
+[VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md).
+
+RailBlock's own domain colors (department blue/green/amber, status
+green/amber/red) sit on top of that neutral system as a "color-tag palette" —
+the same role Linear's own in-product UI gives color for issue labels and
+priorities, which its marketing-site design system doesn't otherwise use.
+
 ## Stack
 
 - **Vite + React + TypeScript** — the app itself

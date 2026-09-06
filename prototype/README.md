@@ -18,7 +18,12 @@ No model training. No historical data. Google OR-Tools CP-SAT.
 
 ```
 pip install -r requirements.txt
+python -m railblock.seed
 ```
+
+The seed step creates `railblock.db` (git-ignored — everyone runs their own
+copy) and loads the demo corridor: 6 sections, 84 traffic-free windows, 18
+requests. Skip it and the app just tells you no corridor is loaded.
 
 ## Run the demo
 
@@ -26,8 +31,21 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-Opens at `http://localhost:8501`. Pick a scenario in the sidebar, drag the
-priority slider, watch the corridor re-plan.
+Opens at `http://localhost:8501`. Pick a role in the sidebar — Engineering,
+S&T, Traction or **Section controller**. Departments submit and withdraw
+their own requests; the controller solves the corridor, explains any block,
+resolves conflicts, publishes the order and exports it as CSV.
+
+## Load real data
+
+```
+python -m railblock.load ../team/2-data/corridor-1
+python -m railblock.load ../team/2-data/corridor-1 --check   # validate only
+```
+
+Replaces the corridor from `sections.csv` / `windows.csv` / `requests.csv`.
+Every row error names the file, the row and what to fix — see
+`railblock/load.py`.
 
 ## Run it in the terminal
 
@@ -38,10 +56,13 @@ python -m railblock.cli C --strict     # the conflict answer
 python -m railblock.cli B --urgency 1.0
 ```
 
+The CLI runs against the built-in scenarios, not the database — useful for
+poking at the solver directly without the UI.
+
 ## Run the checks
 
 ```
-python test_railblock.py
+pytest
 ```
 
 17 checks. Every claim the demo makes is asserted here — that the plan breaks
@@ -112,23 +133,41 @@ so the demo never asks anyone to take the solver's word for it.
 
 ```
 prototype/
-├── app.py                  Streamlit demo
+├── app.py                  Streamlit app — roles, submit, solve, explain, publish
 ├── test_railblock.py       17 checks
 ├── requirements.txt
 └── railblock/
     ├── model.py            constraint model, solve(), verify(), conflict minimisation
-    ├── scenarios.py        the three demo scenarios
+    ├── store.py            SQLite persistence — requests, plans, activity log
+    ├── explain.py          "why is this block here" — read the finished plan back
+    ├── load.py             CSV import for a real corridor, with row-level validation
+    ├── seed.py             database seeder
+    ├── scenarios.py        the three demo scenarios (used by the CLI)
     ├── chart.py            Gantt rendering
     └── cli.py              terminal interface
 ```
 
+Full architecture, the data model and the reasoning behind each layer are in
+[`../docs/02-technical-architecture.md`](../docs/02-technical-architecture.md)
+— read that before changing `model.py` or `store.py`.
+
 ---
 
-## Not built yet
+## What's built vs. what's left
 
-Honest scope, so nothing here is oversold:
+Every ticket up to the internal hackathon is done — the solver, persistence,
+roles, submission, solving, explanation, conflict-and-defer, publishing, CSV
+export and the activity log. See
+[`../docs/05-feature-tickets.md`](../docs/05-feature-tickets.md) for the full
+ticket list.
 
-- No connection to live TMS / BDMS / SMMS — scenarios are parameterised, which
-  the problem statement supports since it enumerates its own inputs.
-- Single-user local app; no auth, no persistence, no multi-division rollout.
-- Block durations are given, not estimated from history.
+Deliberately still open, and deliberately not built ahead of time:
+
+- **No authentication.** Roles are selected from a dropdown, not logged into.
+  This is a documented, intentional limitation — see
+  [`../docs/03-security-and-access.md`](../docs/03-security-and-access.md).
+- **No connection to live TMS / BDMS / SMMS** — corridors are loaded from CSV,
+  which the problem statement supports since it enumerates its own inputs.
+- **No deployment yet, and the handful of extra domain rules from
+  `../team/1-domain/rules-worksheet.md`** are reserved for the technical
+  team member on the hackathon day itself.

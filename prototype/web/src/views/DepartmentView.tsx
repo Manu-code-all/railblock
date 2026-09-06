@@ -2,17 +2,17 @@ import { AlertTriangle, ChevronDown, Send } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { StatusPill } from '../components/Pill'
+import { useToast } from '../components/ui/Toast'
 import type { Dept, RequestRow, Section } from '../types'
 
 interface Props {
   dept: Dept
-  roleLabel: string
   sections: Section[]
   days: number
   onChanged: () => void
 }
 
-export function DepartmentView({ dept, roleLabel, sections, days, onChanged }: Props) {
+export function DepartmentView({ dept, sections, days, onChanged }: Props) {
   const [rows, setRows] = useState<RequestRow[]>([])
   const [published, setPublished] = useState<any>({ plan: null, blocks: [] })
   const [open, setOpen] = useState(false)
@@ -22,7 +22,7 @@ export function DepartmentView({ dept, roleLabel, sections, days, onChanged }: P
   const [priority, setPriority] = useState(3)
   const [deadline, setDeadline] = useState(Math.min(3, days - 1))
   const [warning, setWarning] = useState<string | null>(null)
-  const [toast, setToast] = useState<string | null>(null)
+  const toast = useToast()
 
   const load = () => {
     api.requests().then(setRows)
@@ -40,26 +40,27 @@ export function DepartmentView({ dept, roleLabel, sections, days, onChanged }: P
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     if (!title.trim()) return
-    const res = await api.submit({
-      section, title: title.trim(), duration, priority,
-      deadline_day: deadline,
-    })
-    setWarning(res.warning)
-    setToast(`Submitted as ${res.id}.`)
-    setTitle('')
-    setOpen(false)
-    load()
-    onChanged()
-    setTimeout(() => setToast(null), 3500)
+    try {
+      const res = await api.submit({
+        section, title: title.trim(), duration, priority,
+        deadline_day: deadline,
+      })
+      setWarning(res.warning)
+      toast.success(`Submitted as ${res.id}.`)
+      setTitle('')
+      setOpen(false)
+      load()
+      onChanged()
+    } catch (err: any) {
+      toast.error(`Couldn't submit the request: ${err.message}`, () => submit(e))
+    }
   }
 
   const sectionName = (id: string) => sections.find((s) => s.id === id)?.name ?? id
   const myPublished = published.blocks?.filter((b: any) => b.dept === dept) ?? []
 
   return (
-    <div className="mx-auto max-w-4xl px-8 py-10">
-      <h1 className="text-[28px] font-semibold leading-[1.2] tracking-[-0.6px] text-[var(--ink)]">{roleLabel}</h1>
-      <p className="mt-1 text-[var(--ink-soft)]">Your block requests for this corridor.</p>
+    <div>
 
       <div className="mt-7 grid grid-cols-4 gap-4">
         {[
@@ -75,11 +76,6 @@ export function DepartmentView({ dept, roleLabel, sections, days, onChanged }: P
         ))}
       </div>
 
-      {toast && (
-        <div className="mt-5 rounded-[8px] border border-[var(--green)]/30 bg-[var(--green)]/10 px-4 py-2.5 text-sm font-medium text-[var(--green)]">
-          {toast}
-        </div>
-      )}
       {warning && (
         <div className="mt-3 flex items-start gap-2 rounded-[8px] border border-[var(--amber)]/30 bg-[var(--amber)]/10 px-4 py-2.5 text-sm text-[var(--amber)]">
           <AlertTriangle size={16} className="mt-0.5 flex-none" />
@@ -175,7 +171,9 @@ export function DepartmentView({ dept, roleLabel, sections, days, onChanged }: P
               <StatusPill status={r.status} />
               {r.status === 'pending' ? (
                 <button
-                  onClick={() => api.withdraw(r.id).then(() => { load(); onChanged() })}
+                  onClick={() => api.withdraw(r.id)
+                    .then(() => { toast.success(`${r.id} withdrawn.`); load(); onChanged() })
+                    .catch((err) => toast.error(`Couldn't withdraw ${r.id}: ${err.message}`))}
                   className="rounded-[8px] border border-[var(--hairline-strong)] px-3 py-1.5 text-xs font-semibold text-[var(--ink-soft)] hover:bg-[var(--surface-2)]"
                 >
                   Withdraw

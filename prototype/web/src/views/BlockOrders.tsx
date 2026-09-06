@@ -11,8 +11,7 @@ export function BlockOrders() {
   if (!data) return null
 
   return (
-    <div className="mx-auto max-w-5xl px-8 py-10">
-      <h1 className="text-[28px] font-semibold leading-[1.2] tracking-[-0.6px] text-[var(--ink)]">Block orders</h1>
+    <div>
 
       {!data.plan ? (
         <p className="mt-6 rounded-[8px] bg-[var(--surface-2)] px-4 py-3 text-sm text-[var(--ink-soft)]">

@@ -1,32 +1,49 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 :root {
-  /* Linear's surface ladder, inverted to light — page recedes, cards lift to white */
-  --canvas: #f6f6f7;
-  --surface-1: #ffffff;
-  --surface-2: #f2f2f4;
-  --surface-3: #e9e9ec;
-  --hairline: #e4e4e7;
-  --hairline-strong: #d4d4d9;
+  --color-primary: #1a2332;
+  --color-primary-light: #2a3a4e;
+  --color-accent: #3b82f6;
+  --color-accent-hover: #2563eb;
+  --color-accent-green: #10b981;
+  --color-accent-amber: #f59e0b;
+  --color-accent-red: #ef4444;
+  --color-accent-purple: #8b5cf6;
 
-  --ink: #17181a;
-  --ink-muted: #4a4c50;
-  --ink-soft: #74767b;
-  --ink-faint: #9a9ca1;
+  --color-surface: #f8fafc;
+  --color-surface-elevated: #ffffff;
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
 
-  /* Linear's single chromatic accent — reserved for CTAs, focus, brand */
-  --lavender: #5e6ad2;
-  --lavender-hover: #4550b8;
-  --lavender-focus: #5e69d1;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
 
-  /* RailBlock's own semantic layer — department + status, tuned to read on light */
-  --navy: var(--lavender);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08);
+
+  /* legacy aliases so nothing already using the old token names breaks */
+  --canvas: var(--color-surface);
+  --surface-1: var(--color-surface-elevated);
+  --surface-2: #f1f5f9;
+  --surface-3: #e9edf2;
+  --hairline: var(--color-border);
+  --hairline-strong: var(--color-border-strong);
+  --ink: var(--color-text-primary);
+  --ink-muted: var(--color-text-secondary);
+  --ink-soft: var(--color-text-secondary);
+  --ink-faint: var(--color-text-muted);
+  --lavender: var(--color-accent);
+  --lavender-hover: var(--color-accent-hover);
+  --lavender-focus: var(--color-accent);
+  --navy: var(--color-accent);
   --blue: #2E6DA4;
-  --green: #1E8449;
-  --amber: #B8790A;
-  --red: #C0392B;
-
+  --green: var(--color-accent-green);
+  --amber: var(--color-accent-amber);
+  --red: var(--color-accent-red);
+  --purple: var(--color-accent-purple);
   --chip-bg: var(--surface-2);
 }
 
@@ -36,34 +53,50 @@ html, body, #root { height: 100%; }
 
 body {
   margin: 0;
-  background: var(--canvas);
-  color: var(--ink);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
   font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
-  font-feature-settings: 'ss01' on;
-  letter-spacing: -0.05px;
+  font-size: 14px;
 }
 
 h1, h2, .display {
   font-weight: 600;
-  letter-spacing: -0.6px;
 }
 
 .mono {
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
 }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: var(--hairline-strong); border-radius: 8px; }
+::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 
-::selection { background: var(--lavender); color: white; }
+::selection { background: var(--color-accent); color: white; }
 
-input, select, textarea {
-  color-scheme: light;
+input, select, textarea { color-scheme: light; }
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  from { background-position: -200px 0; }
+  to { background-position: 200px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #eef1f4 25%, #f6f8fa 37%, #eef1f4 63%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }

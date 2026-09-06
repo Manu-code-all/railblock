@@ -2,6 +2,7 @@ import { AlertOctagon, CheckCircle2, ChevronDown, Loader2, Rocket, Sparkles } fr
 import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { Gantt } from '../components/Gantt'
+import { useToast } from '../components/ui/Toast'
 import type { Explanation, Section, SolveResult, WindowRow } from '../types'
 
 interface Props {
@@ -21,7 +22,7 @@ export function ControllerView({ sections, onChanged }: Props) {
   const [explanation, setExplanation] = useState<Explanation | null>(null)
   const [unschedOpen, setUnschedOpen] = useState(false)
   const [publishing, setPublishing] = useState(false)
-  const [published, setPublished] = useState<string | null>(null)
+  const toast = useToast()
 
   useEffect(() => { api.windows().then(setWindows) }, [])
 
@@ -36,6 +37,7 @@ export function ControllerView({ sections, onChanged }: Props) {
     } catch (e: any) {
       setError(e.message)
       setResult(null)
+      toast.error(`The solver could not run: ${e.message}`, () => run(nextStrict, nextUrgency))
     } finally {
       setLoading(false)
     }
@@ -49,9 +51,14 @@ export function ControllerView({ sections, onChanged }: Props) {
   }, [explainOpen, explainPick, strict, urgency, result])
 
   async function defer(rid: string) {
-    await api.defer(rid)
-    onChanged()
-    run()
+    try {
+      await api.defer(rid)
+      toast.success(`${rid} deferred — re-solving.`)
+      onChanged()
+      run()
+    } catch (e: any) {
+      toast.error(`Couldn't defer ${rid}: ${e.message}`)
+    }
   }
 
   async function publish() {
@@ -59,9 +66,10 @@ export function ControllerView({ sections, onChanged }: Props) {
     try {
       const { id } = await api.createPlan(strict, urgency)
       await api.publish(id)
-      setPublished(`Published as plan #${id}. Departments can now see it.`)
+      toast.success(`Published as plan #${id}. Departments can now see it.`)
       onChanged()
-      setTimeout(() => setPublished(null), 4000)
+    } catch (e: any) {
+      toast.error(`Couldn't publish: ${e.message}`, publish)
     } finally {
       setPublishing(false)
     }
@@ -75,11 +83,7 @@ export function ControllerView({ sections, onChanged }: Props) {
     : []
 
   return (
-    <div className="mx-auto max-w-5xl px-8 py-10">
-      <h1 className="text-[28px] font-semibold leading-[1.2] tracking-[-0.6px] text-[var(--ink)]">Plan the corridor</h1>
-      <p className="mt-1 text-[var(--ink-soft)]">
-        {sections.length} sections · {windows.length} traffic-free windows
-      </p>
+    <div>
 
       <div className="mt-7 flex items-center gap-8 rounded-[12px] border border-[var(--hairline)] bg-[var(--surface-1)] px-6 py-5">
         <div className="flex-1">
@@ -227,11 +231,6 @@ export function ControllerView({ sections, onChanged }: Props) {
             )}
           </div>
 
-          {published && (
-            <div className="mt-5 rounded-[8px] border border-[var(--green)]/30 bg-[var(--green)]/10 px-4 py-2.5 text-sm font-medium text-[var(--green)]">
-              {published}
-            </div>
-          )}
           <button
             onClick={publish} disabled={publishing}
             className="mt-5 flex items-center gap-2 rounded-[8px] bg-[var(--lavender)] px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"

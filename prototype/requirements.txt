@@ -2,3 +2,7 @@ ortools>=9.10
 streamlit>=1.30
 matplotlib>=3.8
 pandas>=2.0
+
+# React frontend's backend (api/) — optional, see web/README.md
+fastapi>=0.110
+uvicorn>=0.30

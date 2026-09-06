@@ -1,0 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+:root {
+  --bg: #F5F6F8;
+  --surface: #FFFFFF;
+  --surface-2: #FAFBFC;
+  --ink: #16202E;
+  --ink-soft: #5B6B82;
+  --ink-faint: #94A2B8;
+  --line: #E4E8EF;
+
+  --navy: #1F3864;
+  --navy-ink: #14264A;
+  --blue: #2E6DA4;
+  --green: #1E8449;
+  --amber: #B8790A;
+  --red: #C0392B;
+
+  --chip-bg: #EEF1F6;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Manrope', -apple-system, 'Segoe UI', sans-serif;
+  font-feature-settings: 'ss01' on;
+}
+
+.mono {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: #D3D9E3; border-radius: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -19,7 +19,7 @@ proof beats a prediction for a safety-adjacent scheduling problem.
 
 | | |
 |---|---|
-| [`prototype/`](prototype/) | The working system — Streamlit app, CP-SAT solver, SQLite persistence. **Start here to run it.** |
+| [`prototype/`](prototype/) | The working system — CP-SAT solver, SQLite persistence, and two interfaces: the original Streamlit app and a React frontend. **Start here to run it.** |
 | [`docs/`](docs/) | The five planning documents — problem, architecture, security, frontend spec, feature tickets. |
 | [`team/`](team/) | Prep packages for the four non-coding team members (domain rules, real corridor data, pitch, testing). |
 | [`deck/`](deck/) | The submitted SIH idea-presentation deck. |
@@ -34,6 +34,12 @@ pip install -r requirements.txt
 python -m railblock.seed
 streamlit run app.py
 ```
+
+That's the original interface. For the newer React frontend instead, run the
+API (`python -m uvicorn api.main:app --port 8001`) and `prototype/web`
+(`npm install && npm run dev`) side by side — see
+[`prototype/web/README.md`](prototype/web/README.md). Both interfaces read
+and write the same database.
 
 See [`prototype/README.md`](prototype/README.md) for the full walkthrough —
 loading real corridor data, running the test suite, and the terminal CLI.

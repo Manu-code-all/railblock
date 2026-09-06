@@ -11,6 +11,11 @@ prototype/st.log
 prototype/.agents/
 prototype/.claude/
 
+# React frontend — reinstall with `npm install` in prototype/web
+prototype/web/node_modules/
+prototype/web/dist/
+prototype/web/.vite/
+
 # Large raw video footage and borrowed reference clips — not part of
 # the demo deliverable. The finished MVP video lives in video/final/.
 video/raw/

@@ -1,6 +1,6 @@
 # 05 · Feature Ticket List
 
-**RailBlock** · Version 1.0 · 3 September 2026
+**RailBlock** · Version 1.2 · 6 September 2026
 Internal hackathon: **7 September**
 
 > **Technical member:** the tickets marked **`SUNDAY`** are yours. Everything
@@ -27,66 +27,23 @@ Priority: **P0** demo breaks without it · **P1** materially better · **P2** ni
 | T09 | **`to_scenario()`** — database into the solver, solver unchanged | The only coupling point |
 | T10 | **Database seeder** | `python -m railblock.seed` |
 | T11 | **Explanation engine** — why is this block here | `explain.py` |
+| T12 | Role selector and department view | Streamlit sidebar picker; superseded in the React app by real login (T26) |
+| T13 | Submit a request form | Validation per `04-frontend-specification.md` §3.1 |
+| T14 | Controller plan view | Result strip, Gantt, verification banner — every value computed, none hard-coded |
+| T15 | **CSV import for corridor and requests** | `railblock/load.py` — per-row validation, names file/row/fix |
+| T16 | **Explanation panel in the UI** | Pick a block, see reasons and the windows considered |
+| T17 | **Conflict view with defer-and-resolve** | Names the irreducible set, defers and re-solves without leaving the screen |
+| T18 | Publish and view block orders | Publishing marks requests `planned`, order visible from department view |
+| T19 | Export the block order | CSV, grouped by day and section |
+| T20 | Activity log page | Newest first, filterable by actor |
+| T21 | Empty and error states | Every state in §4 of the frontend spec |
+| T26 | **React frontend** (`web/` + `api/`) | Full feature parity with the Streamlit app, built for presentation quality — see `web/README.md` |
+| T27 | **Real login, server-side authorisation, login rate limiting** | Replaces the role dropdown in the React app; see `03-security-and-access.md` |
 
----
-
-## TO BUILD BEFORE SUNDAY — Manu, with help
-
-### T12 · Role selector and department view · **P0**
-Sidebar role picker; each department sees only its own requests.
-
-*Done when:* switching role changes the list; a department cannot see another's
-requests; the choice survives navigation.
-
-### T13 · Submit a request form · **P0**
-Per `04-frontend-specification.md` §3.1, with the validation listed there.
-
-*Done when:* a submitted request persists across a restart, appears for the
-controller, and is written to the activity log.
-
-### T14 · Controller plan view · **P0**
-All requests, Solve, result strip, Gantt, verification banner.
-
-*Done when:* result strip shows solver status, block count, measured solve time
-and `verify()` violations — every value computed, none hard-coded.
-
-### T15 · CSV import for corridor and requests · **P0**
-Reads `sections.csv`, `windows.csv`, `requests.csv` in the format Member 2 is
-filling in (`team/2-data/`). `windows.csv` uses a repeating-day format
-(`days = 0-6`) that expands to individual windows.
-
-*Blocks Member 2's package — build this early.*
-
-*Done when:* `python -m railblock.load team/2-data/corridor-1` replaces the
-corridor, and the app runs on it with no code change.
-
-### T16 · Explanation panel in the UI · **P1**
-Surface `explain.py` — pick a block, see reasons and the windows considered.
-
-*Done when:* every scheduled block explains itself and the reasoning matches the
-chart.
-
-### T17 · Conflict view with defer-and-resolve · **P1**
-Per §3.3. Name the conflicting requests, show the arithmetic, allow deferring one
-and re-solving in place.
-
-*Done when:* the overloaded corridor names exactly its irreducible set, and
-deferring one produces a valid plan without leaving the screen.
-
-### T18 · Publish and view block orders · **P1**
-Publish a draft; departments see the live order filtered to them.
-
-*Done when:* publishing marks its requests `planned` and the order is visible
-from a department view.
-
-### T19 · Export the block order · **P1**
-CSV download, grouped by day and section.
-
-### T20 · Activity log page · **P2**
-Newest first, filterable by actor.
-
-### T21 · Empty and error states · **P1**
-Every state in §4 of the frontend spec. No bare tracebacks.
+The Streamlit app (`app.py`) and the React app (`web/`) both still work, read
+and write the same database, and can be run side by side — the React app is
+what gets demoed; Streamlit is the fallback if anything about the newer app
+doesn't hold up.
 
 ---
 
@@ -96,7 +53,10 @@ Every state in §4 of the frontend spec. No bare tracebacks.
 Read the architecture doc, then look hardest at:
 - The objective weights in `model.py` — are urgency and uptime balanced sensibly?
 - The `store.py` schema — anything that will bite us mid-demo?
-- Streamlit caching — is anything stale after a write?
+- Caching — Streamlit's `st.cache_data`, and the React app's client-side
+  re-fetch after every mutation. Is anything stale after a write, in either app?
+- The auth model (`api/main.py`) — demo-scale on purpose (§1 of the security
+  doc); is there anything there that would embarrass us if a judge tried it?
 
 *Deliverable: a short list of what you changed and why, for the Q&A.*
 
@@ -110,8 +70,10 @@ neighbouring sections. It extends the existing `AddNoOverlap` pattern.
 *Done when:* the new constraint has a test, and `verify()` checks it too.
 
 ### T24 · `SUNDAY` · Deploy · **P2**
-Streamlit Community Cloud, or anything with a URL. A judge opening it on their
-own phone is worth more than any slide.
+The React app (`web/`) plus the FastAPI backend (`api/`), anywhere with a URL —
+that's the one to put in front of judges. Streamlit Community Cloud remains the
+fallback if the two-service deploy costs too much time. A judge opening it on
+their own phone is worth more than any slide.
 
 *If it costs more than an hour, drop it and demo locally.*
 
@@ -122,10 +84,9 @@ own phone is worth more than any slide.
 
 ## Order of work
 
-**Wed 3 Sep** — T15 first (unblocks Member 2), then T12
-**Thu 4 Sep** — T13, T14
-**Fri 5 Sep** — T16, T17, then load Member 2's real corridor
-**Sat 6 Sep** — T18, T19, T21, freeze, rehearse, brief the technical member
+**Wed 3 Sep – Sat 6 Sep** — T01 through T21 built and verified, then, once the
+Streamlit UI wasn't presentation-quality, T26 (React frontend) and T27 (real
+login) on top. Everything above this line is done.
 **Sun 7 Sep** — T22, T25, T23, T24 in that order
 
 ## If time runs out

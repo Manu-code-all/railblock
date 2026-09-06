@@ -3,6 +3,13 @@
 **RailBlock** · Version 1.0 · 3 September 2026
 Streamlit multi-page app. This is the spec the UI is built to.
 
+**This document describes the Streamlit fallback specifically.** The React
+app (`web/`, what actually gets demoed) follows the same principles — one
+question per screen, every claim verifiable, honest empty/error states — but
+has its own design tokens (Manrope + IBM Plex Mono, a Tailwind-based palette)
+and talks to a real JSON API instead of calling Python in-process. See
+`web/README.md` for that stack, and `api/main.py` for every endpoint it calls.
+
 ---
 
 ## 1. Principles

@@ -1,22 +1,40 @@
 # 02 · Technical Architecture
 
-**RailBlock** · Version 1.0 · 3 September 2026
+**RailBlock** · Version 1.1 · 6 September 2026
 
 > **If you are the technical member arriving on hackathon day, read this file
 > first, then `05-feature-tickets.md`. Everything else is background.**
+
+**There are two frontends now, both talking to the same solver and the same
+database.** The Streamlit app (`app.py`) is what §1 below was originally
+written for, and it still works. Once the demo needed to look presentation-
+ready, a second interface was built: a React + TypeScript app (`prototype/web/`)
+behind a FastAPI backend (`prototype/api/main.py`) that wraps the exact same
+`railblock` package — `model.py` and `store.py` did not change for it. **The
+React app is what gets demoed**; Streamlit is the fallback. See
+`prototype/web/README.md` for that stack specifically; everything below still
+describes the shared engine underneath both.
 
 ---
 
 ## 1. Shape of the system
 
 ```
-   Department planners            Section controller
-   (ENGG · S&T · TRD)                    │
+   Department accounts             Section controller
+   (login required)                       │
             │                             │
             ▼                             ▼
-   ┌──────────────────────────────────────────────┐
-   │            Streamlit app (app.py)            │   presentation
-   └──────────────────────────────────────────────┘
+   ┌──────────────────────┐   ┌──────────────────────┐
+   │  React app (web/)     │   │  Streamlit (app.py)  │   presentation
+   │  — what gets demoed   │   │  — fallback           │
+   └──────────────────────┘   └──────────────────────┘
+            │                             │
+            ▼                             │
+   ┌──────────────────────┐               │
+   │  FastAPI (api/)       │               │
+   │  login · sessions     │◀── both call ─┘
+   │  server-side authz    │
+   └──────────────────────┘
             │                             │
             ▼                             ▼
    ┌────────────────┐            ┌──────────────────┐
@@ -38,7 +56,10 @@
 Three layers, and the important property is that **the domain layer knows
 nothing about the database or the UI**. `model.py` takes a `Scenario` dataclass
 and returns a `Solution`. It was written before the database existed and did not
-change when the database was added.
+change when the database — or the second frontend, or the login system — was
+added. Both `app.py` and `api/main.py` are consumers of the same `railblock`
+package; neither is privileged, and the domain layer cannot tell which one
+called it.
 
 ## 2. Modules
 
@@ -51,7 +72,10 @@ change when the database was added.
 | `railblock/store.py` | SQLite persistence, `to_scenario()` bridge | New, tested |
 | `railblock/seed.py` | Populate the database from a scenario | New, tested |
 | `railblock/explain.py` | Why is this block here | New, tested |
-| `app.py` | Streamlit UI | Being rebuilt as multi-role |
+| `railblock/load.py` | CSV import for a real corridor, row-level validation | Stable |
+| `app.py` | Streamlit UI — fallback interface | Stable, full feature parity |
+| `api/main.py` | FastAPI layer over `railblock` — login, sessions, every JSON endpoint the React app calls | Stable |
+| `web/` | React + TypeScript + Tailwind UI — what gets demoed | Stable, full feature parity |
 | `test_railblock.py` | 17 checks over the solver | Passing |
 
 ## 3. The solver — the part that matters
@@ -147,8 +171,12 @@ you change the schema, that function is what has to keep working — nothing in
 
 ## 7. Known limitations
 
-- Roles are **selected, not authenticated**. Anyone can act as anyone. See
-  `03-security-and-access.md`.
+- **In the React app**, roles require a real login (hashed passwords, server-
+  issued sessions, server-side authorisation) — but the accounts are a
+  handful of shared demo logins, not individual staff identities. **In the
+  Streamlit fallback**, roles are still selected from a dropdown, not
+  authenticated at all. See `03-security-and-access.md` for exactly where
+  each stands.
 - Single corridor at a time; no multi-division support.
 - No live railway system integration; corridor data comes from CSV or the seeder.
 - Block durations are given, never estimated.
@@ -160,12 +188,27 @@ you change the schema, that function is what has to keep working — nothing in
 ```
 cd prototype
 pip install -r requirements.txt
-python -m railblock.seed        # corridor + 18 requests
+python -m railblock.seed        # corridor + 18 requests + 4 demo accounts
+```
+
+**The React app (what gets demoed)** — two processes:
+
+```
+python -m uvicorn api.main:app --port 8001     # terminal 1
+cd web && npm install && npm run dev            # terminal 2
+```
+
+Login with `controller` / `railblock2026` (or any of the three department
+accounts — see `web/README.md`).
+
+**The Streamlit fallback:**
+
+```
 streamlit run app.py
 ```
 
 ```
-python test_railblock.py                 # 17 checks
+pytest                                    # 17 checks
 python -m railblock.cli B                # solve in the terminal
 python -m railblock.cli C --strict       # the conflict answer
 ```
@@ -176,10 +219,12 @@ python -m railblock.cli C --strict       # the conflict answer
 |---|---|
 | Add a railway rule | `model.py` — `_build()`, then add a test |
 | Change what drives the plan | `model.py` — the objective section |
-| Add a screen | `app.py` / `pages/` |
+| Add a screen (React) | `web/src/views/`, wire it into `App.tsx` |
+| Add a screen (Streamlit fallback) | `app.py` / `pages/` |
+| Add or change an API endpoint | `api/main.py` — reuses `store.py`/`model.py`, never duplicates their logic |
 | Change what is stored | `store.py` — `SCHEMA` and `to_scenario()` |
 | Improve the reasoning shown | `explain.py` |
-| Change the chart | `chart.py` |
+| Change the chart | `chart.py` (Streamlit) or `web/src/components/Gantt.tsx` (React) |
 
-**Rule of thumb:** if a change makes `model.py` import anything from `store.py`
-or Streamlit, it is the wrong change.
+**Rule of thumb:** if a change makes `model.py` import anything from `store.py`,
+Streamlit, or `api/main.py`, it is the wrong change.

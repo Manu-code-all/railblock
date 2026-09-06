@@ -46,9 +46,10 @@ loading real corridor data, running the test suite, and the terminal CLI.
 
 ## Status
 
-The engine and interface are complete (tickets T01–T21 — solver, persistence,
-roles, submission, solving, explanation, conflict resolution, publishing,
-export, activity log). What's left is reserved on purpose for the team's
+The engine and both interfaces are complete (tickets T01–T21, T26, T27 —
+solver, persistence, submission, solving, explanation, conflict resolution,
+publishing, export, activity log, a React frontend, and real login with
+server-side authorisation). What's left is reserved on purpose for the team's
 technical member to finish live on the internal hackathon day: hardening,
 adding a couple of extra domain rules, deploying, and fixing anything the
 test pass turns up. Full detail in

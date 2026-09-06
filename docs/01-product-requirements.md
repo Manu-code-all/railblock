@@ -52,7 +52,27 @@ is the product decision the whole system rests on.
 The controller is the primary user. Everything else feeds them or consumes their
 output.
 
-## 4. Functional requirements
+## 4. App flow — start to finish
+
+1. **Log in.** A department account or the controller account, from the
+   landing page (React app) or a role picker (Streamlit fallback).
+2. **A department submits a request** — section, work, duration, priority,
+   deadline day — and sees it appear immediately with a `pending` status.
+3. **The controller solves the corridor.** One action. CP-SAT returns a
+   schedule in well under a second, shown as a Gantt chart with an
+   independent verification banner.
+4. **If everything can't fit**, switching on "every request is mandatory"
+   shows the exact irreducible conflicting set with the arithmetic, and a
+   **Defer** button that re-solves in place without leaving the screen.
+5. **Any block can explain itself** — pick a request, see which windows were
+   considered and why the others were ruled out.
+6. **The controller publishes.** The plan becomes the live block order.
+   Departments immediately see their own slice of it; the order exports as
+   CSV.
+7. **Every step above is on the record** — an append-only, filterable
+   activity log ties each action to the account that took it.
+
+## 5. Functional requirements
 
 ### Must have — the system is not credible without these
 
@@ -81,12 +101,14 @@ output.
 ### Out of scope for 7 September — say so plainly if asked
 
 - Live integration with TMS, BDMS, SMMS or the real eBlock system
-- Real authentication; roles are selected, not enforced
+- Individual staff identities — the React app has real login and server-side
+  authorisation, but against a handful of shared demo accounts, not a real
+  staff directory (see `03-security-and-access.md`)
 - Multi-division or network-wide planning
 - Estimating block durations from history
 - Mobile app for field staff
 
-## 5. Constraints the solver enforces
+## 6. Constraints the solver enforces
 
 | Constraint | Meaning |
 |---|---|
@@ -102,7 +124,7 @@ Member 1's rules worksheet (`team/1-domain/`) identifies which real Block
 Working rules we do **not** yet model. The top three from that list are the
 first candidates for extension.
 
-## 6. Success criteria for the internal round
+## 7. Success criteria for the internal round
 
 1. A judge can submit a request and watch it appear in the controller's plan.
 2. The system says **proven optimal** and reports **zero rule violations**.
@@ -112,7 +134,7 @@ first candidates for extension.
 5. Real corridor data from public timetables, not invented data.
 6. Nothing is claimed that is not built.
 
-## 7. What makes this defensible
+## 8. What makes this defensible
 
 Most entries produce an answer and a confidence score. Ours produces a **proof**.
 When a judge asks "how do you know this is right?", the answer is not "our model

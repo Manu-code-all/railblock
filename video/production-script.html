@@ -1,0 +1,1061 @@
+<title>RailBlock Shoot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+
+<style>
+:root{
+  --paper:#FBFAF7; --surface:#FFFFFF; --sunk:#F4F1EB;
+  --ink:#171A1F; --ink2:#5B6069; --ink3:#8A8F99;
+  --rule:#E3DED4; --rule2:#CFC8BB;
+  --rec:#A63D28; --slate:#2C4159; --good:#2E6B4F;
+  --pA:#2C4159; --pB:#A63D28; --pC:#2E6B4F;
+  --pA-bg:#E9EEF5; --pB-bg:#F8EAE6; --pC-bg:#E6F0EA;
+  --warn-bg:#FBF3E2; --warn-line:#C08A2E;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#14161A; --surface:#1B1E24; --sunk:#20242B;
+    --ink:#ECEAE6; --ink2:#A0A6B0; --ink3:#767C87;
+    --rule:#2C3138; --rule2:#3A4048;
+    --rec:#E0785C; --slate:#8FB2DC; --good:#6DC095;
+    --pA:#8FB2DC; --pB:#E0785C; --pC:#6DC095;
+    --pA-bg:#1C2733; --pB-bg:#2E1F1A; --pC-bg:#17281F;
+    --warn-bg:#2A2318; --warn-line:#B08A3E;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#14161A; --surface:#1B1E24; --sunk:#20242B;
+  --ink:#ECEAE6; --ink2:#A0A6B0; --ink3:#767C87;
+  --rule:#2C3138; --rule2:#3A4048;
+  --rec:#E0785C; --slate:#8FB2DC; --good:#6DC095;
+  --pA:#8FB2DC; --pB:#E0785C; --pC:#6DC095;
+  --pA-bg:#1C2733; --pB-bg:#2E1F1A; --pC-bg:#17281F;
+  --warn-bg:#2A2318; --warn-line:#B08A3E;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:Archivo,system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:15px; line-height:1.55;
+  padding:0 20px 96px;
+}
+.wrap{max-width:1080px;margin:0 auto}
+.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  font-variant-numeric:tabular-nums}
+
+/* ── header ─────────────────────────────────────── */
+header{padding:56px 0 30px;border-bottom:2px solid var(--ink)}
+.slug{font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--rec);font-weight:600;margin-bottom:14px}
+h1{font-size:clamp(2rem,5.5vw,3.1rem);font-weight:700;line-height:1.02;
+  letter-spacing:-.025em;text-wrap:balance;margin-bottom:8px}
+.tagline{color:var(--ink2);font-size:1.02rem;max-width:56ch}
+.specs{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.spec{background:var(--surface);border:1px solid var(--rule);
+  border-radius:3px;padding:7px 12px;font-size:12.5px;color:var(--ink2)}
+.spec b{color:var(--ink);font-weight:600}
+
+/* ── sections ───────────────────────────────────── */
+section{margin-top:52px}
+h2{font-size:1.42rem;font-weight:700;letter-spacing:-.015em;
+  padding-bottom:9px;border-bottom:1px solid var(--rule2);margin-bottom:6px}
+.h2note{color:var(--ink3);font-size:13px;margin-bottom:22px}
+h3{font-size:.99rem;font-weight:600;margin:26px 0 10px}
+
+p{color:var(--ink2);max-width:68ch;margin-bottom:11px}
+p strong,li strong{color:var(--ink);font-weight:600}
+a{color:var(--rec)}
+
+ul{list-style:none;display:flex;flex-direction:column;gap:7px}
+li{color:var(--ink2);padding-left:17px;position:relative;max-width:70ch}
+li::before{content:"";position:absolute;left:2px;top:.62em;
+  width:5px;height:5px;border-radius:50%;background:var(--rule2)}
+
+/* ── callout ────────────────────────────────────── */
+.note{background:var(--warn-bg);border-left:3px solid var(--warn-line);
+  padding:15px 18px;border-radius:0 4px 4px 0;margin:20px 0}
+.note p{color:var(--ink);margin:0;max-width:72ch}
+.note p + p{margin-top:9px}
+
+.done{background:var(--pC-bg);border:1px solid var(--pC);border-radius:6px;
+  padding:20px 22px;margin-top:34px}
+.done .donehead{font-size:1.1rem;font-weight:700;color:var(--pC);
+  margin-bottom:10px}
+.done p{color:var(--ink);max-width:78ch}
+.done .tbl{background:var(--surface)}
+
+
+/* ── per-person sheets ──────────────────────────── */
+.sheets{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:15px;margin-top:20px}
+.sheet{background:var(--surface);border:1px solid var(--rule);
+  border-radius:6px;overflow:hidden}
+.sheet .top{padding:14px 17px;border-bottom:1px solid var(--rule)}
+.sheet.a .top{background:var(--pA-bg)}
+.sheet.b .top{background:var(--pB-bg)}
+.sheet.c .top{background:var(--pC-bg)}
+.sheet .top h4{font-size:1.06rem;font-weight:700;margin-bottom:3px}
+.sheet.a .top h4{color:var(--pA)}
+.sheet.b .top h4{color:var(--pB)}
+.sheet.c .top h4{color:var(--pC)}
+.sheet .top .meta{font-size:12px;color:var(--ink2)}
+.sheet .inner{padding:15px 17px}
+.sheet .bt{font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink3);font-weight:600;margin:14px 0 6px;
+  display:flex;justify-content:space-between;gap:10px}
+.sheet .bt:first-child{margin-top:0}
+.sheet .bt .k{color:var(--ink3);font-weight:500;text-transform:none;
+  letter-spacing:0;font-family:"JetBrains Mono",monospace;font-size:10.5px}
+.sheet ul{gap:6px}
+.sheet li{font-size:13.4px;padding-left:15px}
+.sheet li::before{width:4px;height:4px;top:.66em}
+.sheet .vo{display:inline-block;font-size:10px;font-weight:700;
+  letter-spacing:.06em;padding:2px 6px;border-radius:3px;
+  background:var(--sunk);color:var(--ink2);border:1px solid var(--rule)}
+
+/* ── roles ──────────────────────────────────────── */
+.roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));
+  gap:13px;margin-top:20px}
+.role{background:var(--surface);border:1px solid var(--rule);
+  border-radius:5px;padding:15px 16px}
+.role.cam{border-top:3px solid var(--pA)}
+.role.cam.b{border-top-color:var(--pB)}
+.role.cam.c{border-top-color:var(--pC)}
+.role .who{font-size:11px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink3);font-weight:600;margin-bottom:5px}
+.role h4{font-size:1.03rem;font-weight:700;margin-bottom:7px}
+.role p{font-size:13.5px;margin:0;color:var(--ink2)}
+.role .name{margin-top:11px;padding-top:9px;border-top:1px dashed var(--rule2);
+  font-size:12px;color:var(--ink3)}
+
+/* ── the script ─────────────────────────────────── */
+.beats{display:flex;flex-direction:column;gap:0;margin-top:8px;
+  border-top:1px solid var(--rule2)}
+.beat{display:grid;grid-template-columns:78px 1fr 1.25fr;
+  border-bottom:1px solid var(--rule);}
+.beat > *{padding:20px 0}
+.tc{padding-right:14px}
+.tc .num{font-size:11px;letter-spacing:.1em;color:var(--ink3);
+  font-weight:600;margin-bottom:3px}
+.tc .time{font-size:13.5px;font-weight:500;color:var(--ink)}
+.tc .dur{font-size:11.5px;color:var(--ink3);margin-top:2px}
+.tc .chip{display:inline-block;margin-top:9px;font-size:10.5px;
+  font-weight:700;letter-spacing:.07em;padding:2.5px 7px;border-radius:3px}
+.chip.a{background:var(--pA-bg);color:var(--pA)}
+.chip.b{background:var(--pB-bg);color:var(--pB)}
+.chip.c{background:var(--pC-bg);color:var(--pC)}
+
+.col{padding-right:24px;border-left:1px solid var(--rule);padding-left:20px}
+.col .lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink3);font-weight:600;margin-bottom:9px}
+.col.screen .lbl{color:var(--slate)}
+.col.say .lbl{color:var(--rec)}
+.col p,.col li{font-size:13.7px}
+.say ul{gap:9px}
+.say li{font-family:"Source Serif 4",Georgia,serif;font-size:15px;
+  line-height:1.5;color:var(--ink)}
+.say li::before{background:var(--rec);opacity:.5}
+.lands{margin-top:13px;padding:11px 13px;background:var(--sunk);
+  border-radius:4px;border-left:2px solid var(--rec)}
+.lands .lbl2{font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink3);font-weight:600;margin-bottom:5px;
+  font-family:Archivo,sans-serif}
+.lands q{font-family:"Source Serif 4",Georgia,serif;font-size:15px;
+  font-style:italic;color:var(--ink);display:block;line-height:1.45}
+.screen .shot{font-size:12px;color:var(--ink3);margin-top:10px;
+  padding-top:8px;border-top:1px dashed var(--rule2)}
+
+/* ── tables ─────────────────────────────────────── */
+.tbl{overflow-x:auto;margin-top:16px;border:1px solid var(--rule);
+  border-radius:5px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:420px}
+th{text-align:left;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink3);font-weight:600;padding:11px 14px;
+  border-bottom:1px solid var(--rule2);white-space:nowrap}
+td{padding:10px 14px;font-size:13.5px;color:var(--ink2);
+  border-bottom:1px solid var(--rule);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td:first-child{color:var(--ink);font-weight:500;white-space:nowrap}
+
+/* ── code ───────────────────────────────────────── */
+pre{background:var(--sunk);border:1px solid var(--rule);border-radius:5px;
+  padding:13px 15px;overflow-x:auto;margin:14px 0}
+code{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  font-size:12.5px;color:var(--ink);white-space:pre}
+p code,li code,td code{background:var(--sunk);padding:1.5px 5px;
+  border-radius:3px;font-size:12.5px;border:1px solid var(--rule)}
+
+/* ── folder tree ────────────────────────────────── */
+.tree{background:var(--surface);border:1px solid var(--rule);border-radius:5px;
+  padding:16px 18px;overflow-x:auto;margin-top:16px}
+.tree pre{background:none;border:none;padding:0;margin:0}
+.tree code{color:var(--ink2);font-size:12.5px;line-height:1.75}
+
+/* ── checklist ──────────────────────────────────── */
+.check{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));
+  gap:9px;margin-top:18px}
+.ck{display:flex;gap:10px;align-items:flex-start;background:var(--surface);
+  border:1px solid var(--rule);border-radius:4px;padding:11px 13px}
+.ck .bx{width:14px;height:14px;border:1.5px solid var(--rule2);
+  border-radius:2.5px;flex-shrink:0;margin-top:2px}
+.ck span{font-size:13px;color:var(--ink2)}
+
+/* ── timeline ───────────────────────────────────── */
+.tl{display:flex;flex-direction:column;gap:0;margin-top:16px}
+.tlrow{display:grid;grid-template-columns:64px 1fr;gap:16px;
+  padding:11px 0;border-bottom:1px solid var(--rule)}
+.tlrow:last-child{border-bottom:none}
+.tlrow .t{font-size:13px;color:var(--rec);font-weight:500}
+.tlrow .w strong{display:block;color:var(--ink);font-weight:600;font-size:13.7px}
+.tlrow .w span{font-size:12.5px;color:var(--ink3)}
+
+footer{margin-top:64px;padding-top:22px;border-top:1px solid var(--rule2);
+  font-size:12.5px;color:var(--ink3)}
+
+@media (max-width:820px){
+  .beat{grid-template-columns:1fr;gap:0}
+  .beat > *{padding:14px 0}
+  .tc{padding:16px 0 0;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .tc .num,.tc .time,.tc .dur{margin:0}
+  .tc .chip{margin-top:0}
+  .col{border-left:none;border-top:1px solid var(--rule);padding-left:0;
+    padding-right:0;margin-top:12px;padding-top:14px}
+}
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="slug">MVP video · shooting script &amp; call sheet</div>
+  <h1>RailBlock on camera</h1>
+  <p class="tagline">Everything six people need to shoot, cut and export the
+    2-minute-45 MVP video for SIH 2026 — PS SIH2026027, Automatic Block
+    Planning for Indian Railways.</p>
+  <div class="specs">
+    <div class="spec"><b>2:57</b> runtime</div>
+    <div class="spec"><b>Under 10 MB</b> MP4</div>
+    <div class="spec"><b>3</b> on camera</div>
+    <div class="spec"><b>Screen footage</b> already shot</div>
+    <div class="spec"><b>~90 min</b> to shoot</div>
+    <div class="spec">Team <b>Anomaly</b></div>
+  </div>
+</header>
+
+<section>
+  <div class="done">
+    <div class="donehead">The three screen segments are already recorded</div>
+    <p>Beats 4, 5 and 6 are captured and sitting in
+      <code>SIH\video\raw\screen\</code>. They are real recordings of the real
+      app running — the browser was driven through the click path and the
+      session recorded, so what is on screen is genuinely your software
+      solving genuine scenarios.</p>
+    <div class="tbl" style="margin-top:14px">
+      <table>
+        <thead><tr><th>File</th><th>Length</th><th>Beat</th><th>What happens</th></tr></thead>
+        <tbody>
+          <tr><td><code>b04_screen.mp4</code></td><td class="mono">34.4 s</td><td>4</td>
+            <td>Scenario B is selected, the corridor solves, the cursor walks
+              the metric row and traces the Gantt, then rests on the green
+              verification banner.</td></tr>
+          <tr><td><code>b05_screen.mp4</code></td><td class="mono">27.5 s</td><td>5</td>
+            <td>The priority slider is dragged fully left (7 days, no daytime
+              windows), held, then fully right (2 days). Same 18 jobs both
+              times.</td></tr>
+          <tr><td><code>b06_screen.mp4</code></td><td class="mono">33.6 s</td><td>6</td>
+            <td>Scenario C, mandatory mode on, the red conflict panel naming
+              R01, R02 and R03 with the 270-into-240 arithmetic.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:14px"><strong>So you only need to shoot faces and
+      voices.</strong> Record beats 1, 2, 3, 7 and 8 to camera, record voiceover
+      for 4, 5 and 6 while watching these clips play back, then lay the voice
+      over the clip in your editor.</p>
+    <p>Each clip has a second or two of padding at the head and tail — trim it
+      to taste. If you change the app and need fresh footage, re-run
+      <code>python capture_screen.py</code> from the video folder (add
+      <code>b05</code> to redo just one).</p>
+  </div>
+</section>
+
+<section>
+  <div class="note">
+    <p><strong>About the "say this" column.</strong> The brief says present the
+      idea <em>in your own voice</em>, and that using AI for the video's
+      creation or presentation is prohibited. So the right column gives you the
+      <strong>points to cover</strong> — the actual facts, numbers and claims —
+      not lines to memorise.</p>
+    <p>Say each point your own way, and differently on every take. A recited
+      script is exactly what that rule exists to catch, and it is obvious on
+      camera. The one italic line per beat is a <em>suggested phrasing</em> for
+      the idea that has to land — reword it so it sounds like you.</p>
+  </div>
+</section>
+
+<!-- ══════════════ ROLES ══════════════ -->
+<section>
+  <h2>Who does what</h2>
+  <p class="h2note">Six people, six jobs. Nobody is spare.</p>
+  <div class="roles">
+    <div class="role cam">
+      <div class="who">On camera · Presenter A</div>
+      <h4>The problem</h4>
+      <p>Beats 1–2. Opens the video. Needs to sound like someone explaining a
+        real operational mess, not reading a definition.</p>
+      <div class="name">Name: ______________</div>
+    </div>
+    <div class="role cam b">
+      <div class="who">On camera · Presenter B</div>
+      <h4>Solution &amp; demo</h4>
+      <p>Beats 3–5. <strong>Give this to the developer</strong> — they can answer
+        anything and narrate the app naturally.</p>
+      <div class="name">Name: ______________</div>
+    </div>
+    <div class="role cam c">
+      <div class="who">On camera · Presenter C</div>
+      <h4>Conflict, impact, close</h4>
+      <p>Beats 6–8. Carries the strongest moment in the video and the honest
+        scope statement at the end.</p>
+      <div class="name">Name: ______________</div>
+    </div>
+    <div class="role">
+      <div class="who">Crew</div>
+      <h4>Camera &amp; sound</h4>
+      <p>Frames every shot, watches audio levels, calls takes, keeps the take
+        log. Has the final say on whether a take is usable.</p>
+      <div class="name">Name: ______________</div>
+    </div>
+    <div class="role">
+      <div class="who">Crew</div>
+      <h4>Playback &amp; continuity</h4>
+      <p>Plays the supplied screen clips back for B and C to narrate against,
+        and checks nothing said contradicts what is on screen.</p>
+      <div class="name">Name: ______________</div>
+    </div>
+    <div class="role">
+      <div class="who">Crew</div>
+      <h4>Editor</h4>
+      <p>Assembles, cuts to length, exports under 10 MB, checks it on a phone,
+        uploads. Owns the deadline.</p>
+      <div class="name">Name: ______________</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════ PER-PERSON SHEETS ══════════════ -->
+<section>
+  <h2>Who says what</h2>
+  <p class="h2note">One card per presenter — the condensed version of the
+    script above. Send each person only their own card.</p>
+
+  <div class="sheets">
+
+    <div class="sheet a">
+      <div class="top">
+        <h4>Presenter A</h4>
+        <div class="meta">Beats 1–2 · 0:00–0:37 · both to camera</div>
+      </div>
+      <div class="inner">
+        <div class="bt"><span>1 · The problem</span><span class="k">0:22</span></div>
+        <ul>
+          <li>Three departments need the track closed to work: Engineering,
+            Signalling &amp; Telecom, Traction.</li>
+          <li>Each books its own blocks, independently, with no view of the
+            others.</li>
+          <li>Two book the same section the same night; one is cancelled that
+            morning, after the crew has travelled.</li>
+          <li><em>Land:</em> the work doesn't happen and trains are still
+            delayed — nobody did anything wrong, there was just no
+            coordination.</li>
+        </ul>
+        <div class="bt"><span>2 · Why it is hard</span><span class="k">0:15</span></div>
+        <ul>
+          <li>A coordination problem, not a prediction problem.</li>
+          <li>One team per section; work only in traffic-free windows, roughly
+            1am–5am; limited crews; every job has a deadline.</li>
+          <li>Done by hand today, department by department.</li>
+          <li><em>Land:</em> a puzzle with a right answer — just too big for
+            paper.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="sheet b">
+      <div class="top">
+        <h4>Presenter B — the developer</h4>
+        <div class="meta">Beats 3–5 · 0:37–1:56 · beat 3 to camera, 4 and 5 voiceover</div>
+      </div>
+      <div class="inner">
+        <div class="bt"><span>3 · What we built</span><span class="k">0:18</span></div>
+        <ul>
+          <li>RailBlock: one planner taking all three departments' requests
+            plus the timetable, returning a single schedule.</li>
+          <li>Google OR-Tools CP-SAT, a constraint solver.</li>
+          <li>Say it plainly: it trains no model and uses no historical data.</li>
+          <li><em>Land:</em> it doesn't predict a good schedule, it proves one.</li>
+        </ul>
+        <div class="bt"><span>4 · The plan <span class="vo">VO</span></span><span class="k">0:34</span></div>
+        <ul>
+          <li>A week on the Jaipur–Gurgaon corridor: 18 requests, 6 sections.</li>
+          <li>Colour is the department; the pale bands are traffic-free
+            windows, and every block sits inside one.</li>
+          <li>Proven optimal, solved in well under a second — say it that way,
+            the exact figure on screen changes each re-solve.</li>
+          <li>Zero rule violations: a separate checker re-tests the finished
+            plan from scratch.</li>
+          <li><em>Land:</em> not a prediction with a confidence score — the
+            solver proved no better plan exists.</li>
+        </ul>
+        <div class="bt"><span>5 · The slider <span class="vo">VO</span></span><span class="k">0:27</span></div>
+        <ul>
+          <li>Left: protect train service — spreads over 7 days, no daytime
+            windows at all.</li>
+          <li>Right: clear urgent work — same 18 jobs in 2 days, but spending
+            6 daytime windows, which costs train paths.</li>
+          <li>Both are valid, optimal plans.</li>
+          <li><em>Land:</em> the slider doesn't bend the rules, it sets the
+            priority — the controller decides, we show the cost.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="sheet c">
+      <div class="top">
+        <h4>Presenter C</h4>
+        <div class="meta">Beats 6–8 · 1:56–2:57 · beat 6 voiceover, 7 and 8 to camera</div>
+      </div>
+      <div class="inner">
+        <div class="bt"><span>6 · The conflict <span class="vo">VO</span></span><span class="k">0:34</span></div>
+        <ul>
+          <li>Sometimes the requests genuinely don't fit — this is the part
+            we're proudest of.</li>
+          <li>Three emergency jobs, all on Phulera–Jaipur, all the same night.</li>
+          <li>It doesn't say "no solution" — it names them: 90 minutes each,
+            270 in total, and the window is 240.</li>
+          <li>Any two fit; all three can't. No single request to blame, so the
+            clash is genuinely three-way — and it found that.</li>
+          <li>The two requests on the other section aren't listed: not part of
+            the problem.</li>
+          <li><em>Land:</em> a planner can act on this. Nobody can act on "no
+            solution found".</li>
+        </ul>
+        <div class="bt"><span>7 · Impact</span><span class="k">0:15</span></div>
+        <ul>
+          <li>Same for one division or all 68, no code change.</li>
+          <li>Feeds the eBlock workflow they already use — no retraining for
+            field staff.</li>
+          <li>Open-source stack, no licensing cost.</li>
+          <li>Better-planned maintenance means healthier track: punctuality
+            and safety for 13 million passengers a day.</li>
+        </ul>
+        <div class="bt"><span>8 · Honest close</span><span class="k">0:12</span></div>
+        <ul>
+          <li>What runs today: the solver, the verified plans, three scenarios
+            — and you've just watched it work.</li>
+          <li>Next: connecting to the live TMS and BDMS feeds.</li>
+          <li>Sign off — Team Anomaly, Galgotias University, SIH2026027.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════ LAPTOP ══════════════ -->
+<section>
+  <h2>Laptop prep</h2>
+  <p class="h2note">The screen footage is already captured, so none of this is needed to shoot the video. Do it anyway before the finale — this is how you demo live to a judge.</p>
+
+  <h3>1 · The app has to run</h3>
+<pre><code>cd "C:\Users\manug\Downloads\SIH\prototype"</code></pre>
+<pre><code>streamlit run app.py</code></pre>
+  <p>It opens at <code>localhost:8501</code>. Click through all three scenarios
+    once and confirm the Gantt draws. If it errors, fix it now, not on shoot
+    day.</p>
+
+  <h3>2 · Clean the browser</h3>
+  <ul>
+    <li><strong>Hide the bookmarks bar</strong> — <code>Ctrl + Shift + B</code>.
+      Yours is full of personal links (Gmail, LinkedIn, course folders). This
+      video is a public submission; none of that should be in it.</li>
+    <li>Open a <strong>fresh window with only the app tab</strong>. No other
+      tabs — tab titles are readable in the recording.</li>
+    <li><strong>Zoom to 110–125 %</strong> — <code>Ctrl</code> and
+      <code>+</code>. Default Streamlit text is unreadable once the video is
+      squeezed to 10 MB. This is the single highest-value setting on this page.</li>
+    <li>Hide extension icons if any show a badge or a personal avatar.</li>
+  </ul>
+
+  <h3>3 · Silence the machine</h3>
+  <ul>
+    <li>Windows <strong>Do Not Disturb</strong> on — a notification popping up
+      mid-take kills it.</li>
+    <li>Quit WhatsApp, Discord, Slack, mail, and anything that toasts.</li>
+    <li><strong>Plug in the power</strong> and set the screen never to sleep.</li>
+    <li>Display at <strong>1920×1080, 100 % scaling</strong>.</li>
+    <li>Neutral desktop wallpaper, in case a frame catches it.</li>
+  </ul>
+
+  <div class="note">
+    <p><strong>Already handled for you.</strong> The app now pins itself to the
+      light theme and hides Streamlit's Deploy button and hamburger menu, so it
+      looks identical on any laptop and there is no stray UI in your footage.
+      That lives in <code>prototype\.streamlit\config.toml</code> — don't delete it.</p>
+  </div>
+</section>
+
+<!-- ══════════════ ROOM ══════════════ -->
+<section>
+  <h2>Where to shoot</h2>
+  <p class="h2note">Audio decides whether this looks amateur, not the camera.
+    Pick the room for sound first.</p>
+
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Factor</th><th>Do this</th><th>Not this</th></tr></thead>
+      <tbody>
+        <tr><td>Room</td>
+          <td>Small room with soft things — bedroom, curtains, sofa, bed. Cloth
+            absorbs echo.</td>
+          <td>Corridor, empty classroom, lab, stairwell. Hard walls make you
+            sound distant and hollow.</td></tr>
+        <tr><td>Light</td>
+          <td>Window <strong>in front of you</strong>, lighting your face.</td>
+          <td>Window behind you — you become a silhouette. The most common
+            mistake in these videos.</td></tr>
+        <tr><td>Background</td>
+          <td>Plain wall. Clear the clutter out of frame.</td>
+          <td>Busy shelves, laundry, other people walking through.</td></tr>
+        <tr><td>Noise</td>
+          <td><strong>Fan and AC off</strong> during every take. Windows shut.</td>
+          <td>Ceiling fan running — it is a constant hum you cannot remove later.</td></tr>
+        <tr><td>Camera</td>
+          <td>Phone <strong>horizontal</strong>, on a stack of books at eye
+            level, about an arm's length away. 1080p.</td>
+          <td>Vertical video. Handheld. Looking down at a phone on the desk.</td></tr>
+        <tr><td>Mic</td>
+          <td>Wired earbuds with the mic near your collar. Phone on
+            <strong>airplane mode</strong>.</td>
+          <td>Laptop's built-in mic. A call landing mid-take.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p style="margin-top:16px"><strong>Shoot all three presenters in the same
+    room, same spot, same framing.</strong> Three different rooms cut together
+    badly and look thrown-together.</p>
+
+  <div class="note">
+    <p><strong>Do a 10-second audio test and actually listen back on
+      headphones</strong> before the first real take. Every team that skips this
+      discovers the fan hum after everyone has gone home.</p>
+  </div>
+</section>
+
+<!-- ══════════════ FOOTAGE ══════════════ -->
+<section>
+  <h2>Where the footage lives</h2>
+  <p class="h2note">Make these folders before you shoot. Copy off the phone the
+    same day — never edit from the phone.</p>
+
+  <div class="tree"><pre><code>C:\Users\manug\Downloads\SIH\video\
+├── raw\
+│   ├── camera\      face-to-camera takes
+│   └── screen\      silent screen recordings
+├── edit\            editor's project file + work exports
+└── final\           railblock_mvp.mp4   ← the one you upload</code></pre></div>
+
+  <h3>Naming</h3>
+  <p><code>b&lt;beat&gt;_&lt;who&gt;_t&lt;take&gt;.mp4</code> — so
+    <code>b04_screen_t2.mp4</code>, <code>b01_A_t3.mp4</code>. Rename as you
+    copy, not later; by the end you will have thirty clips and no memory of
+    which was which.</p>
+
+  <h3>Take log</h3>
+  <p>Camera &amp; sound keeps a plain text file in <code>raw\</code>: one line
+    per take, and a star on the good ones, decided <em>immediately</em> after
+    the take. This is the difference between a 30-minute edit and a 3-hour one.</p>
+</section>
+
+<!-- ══════════════ THE SCRIPT ══════════════ -->
+<section>
+  <h2>The script</h2>
+  <p class="h2note">Eight beats, 2:57. Left column is what the viewer sees.
+    Right column is what to cover — your words, not these words.</p>
+
+  <div class="beats">
+
+    <!-- BEAT 1 -->
+    <div class="beat">
+      <div class="tc">
+        <div class="num">BEAT 1</div>
+        <div class="time mono">0:00</div>
+        <div class="dur mono">0:22</div>
+        <div class="chip a">A</div>
+      </div>
+      <div class="col screen">
+        <div class="lbl">On screen</div>
+        <p>Presenter A, face to camera. No graphics, no title card — open on a
+          person talking.</p>
+        <div class="shot">Medium close-up: head and shoulders, eyes about a
+          third down the frame.</div>
+      </div>
+      <div class="col say">
+        <div class="lbl">Say this — in your own words</div>
+        <ul>
+          <li>Indian Railways has three departments that all need the track
+            closed to do their work — Engineering for the track itself,
+            Signalling &amp; Telecom, and Traction for the overhead wires.</li>
+          <li>Each one books its own <em>blocks</em> — periods when a section
+            is taken out of service.</li>
+          <li>They book independently. None of them can see the others' plans.</li>
+          <li>So two departments book the same section on the same night. One
+            gets cancelled that morning — after the crew has already travelled
+            out to site.</li>
+        </ul>
+        <div class="lands">
+          <div class="lbl2">The idea that has to land</div>
+          <q>The work doesn't get done, and the trains still get delayed.
+            Nobody did anything wrong — there was just nobody coordinating.</q>
+        </div>
+      </div>
+    </div>
+
+    <!-- BEAT 2 -->
+    <div class="beat">
+      <div class="tc">
+        <div class="num">BEAT 2</div>
+        <div class="time mono">0:22</div>
+        <div class="dur mono">0:15</div>
+        <div class="chip a">A</div>
+      </div>
+      <div class="col screen">
+        <div class="lbl">On screen</div>
+        <p>Stay on A, or cut to <strong>slide 2 of the submitted deck</strong>
+          — the three-departments diagram.</p>
+        <div class="shot">If cutting to the slide, hold it for the whole beat;
+          don't flick back and forth.</div>
+      </div>
+      <div class="col say">
+        <div class="lbl">Say this — in your own words</div>
+        <ul>
+          <li>This isn't a prediction problem. It's a coordination problem.</li>
+          <li>The rules are strict: one team per section at a time, work only
+            inside traffic-free windows — usually one to five in the morning —
+            limited crews, and every job has a deadline.</li>
+          <li>Today it's done by hand, department by department, on
+            spreadsheets.</li>
+        </ul>
+        <div class="lands">
+          <div class="lbl2">The idea that has to land</div>
+          <q>It's a puzzle with a right answer. It's just far too big to solve
+            on paper.</q>
+        </div>
+      </div>
+    </div>
+
+    <!-- BEAT 3 -->
+    <div class="beat">
+      <div class="tc">
+        <div class="num">BEAT 3</div>
+        <div class="time mono">0:37</div>
+        <div class="dur mono">0:18</div>
+        <div class="chip b">B</div>
+      </div>
+      <div class="col screen">
+        <div class="lbl">On screen</div>
+        <p>Presenter B, face to camera. Same framing as A — this is the
+          handover, and it should feel like one team.</p>
+        <div class="shot">Cut straight in on B. No transition effect.</div>
+      </div>
+      <div class="col say">
+        <div class="lbl">Say this — in your own words</div>
+        <ul>
+          <li>We built RailBlock: one planner that takes all three departments'
+            requests plus the timetable, and returns a single schedule.</li>
+          <li>It runs on Google OR-Tools CP-SAT — a constraint solver.</li>
+          <li>Say this part explicitly: <strong>it trains no model and uses no
+            historical data.</strong></li>
+        </ul>
+        <div class="lands">
+          <div class="lbl2">The idea that has to land</div>
+          <q>It doesn't predict a good schedule. It proves one.</q>
+        </div>
+      </div>
+    </div>
+
+    <!-- BEAT 4 -->
+    <div class="beat">
+      <div class="tc">
+        <div class="num">BEAT 4</div>
+        <div class="time mono">0:55</div>
+        <div class="dur mono">0:34</div>
+        <div class="chip b">B</div>
+      </div>
+      <div class="col screen">
+        <div class="lbl">On screen — clip supplied</div>
+        <p><code>raw\screen04_screen.mp4</code> · 34 s</p>
+        <ul style="margin-top:9px">
+          <li>Scenario B is picked, the corridor solves</li>
+          <li>Cursor walks the metric row: result, blocks, time, violations</li>
+          <li>Traces the Gantt, then rests on the green verified banner</li>
+        </ul>
+        <div class="shot">Watch it once, then record your voice against it.
+          Trim the padding at either end to fit.</div>
+      </div>
+      <div class="col say">
+        <div class="lbl">Say this — in your own words · voiceover</div>
+        <ul>
+          <li>This is a week on the Jaipur–Gurgaon corridor: 18 maintenance
+            requests across 6 sections.</li>
+          <li>Colour is the department. The pale bands are the traffic-free
+            windows — and every block sits inside one.</li>
+          <li>Top left: proven optimal — and it solved in well under a second. <em>Say it that way, not with a number: the exact figure on screen changes each time it re-solves.</em></li>
+          <li>Rule violations, zero — that's a separate checker re-testing the
+            finished plan from scratch. We don't ask anyone to just trust the
+            solver.</li>
+        </ul>
+        <div class="lands">
+          <div class="lbl2">The idea that has to land</div>
+          <q>This isn't a prediction with a confidence score. The solver has
+            proved that no better plan exists.</q>
+        </div>
+      </div>
+    </div>
+
+    <!-- BEAT 5 -->
+    <div class="beat">
+      <div class="tc">
+        <div class="num">BEAT 5</div>
+        <div class="time mono">1:29</div>
+        <div class="dur mono">0:27</div>
+        <div class="chip b">B</div>
+      </div>
+      <div class="col screen">
+        <div class="lbl">On screen — clip supplied</div>
+        <p><code>raw\screen05_screen.mp4</code> · 27 s</p>
+        <ul style="margin-top:9px">
+          <li>Scenario B selected first, so it is the same 18 jobs throughout</li>
+          <li>Slider dragged fully left — the plan spreads across 7 days</li>
+          <li>Then fully right — the same work compresses into 2 days</li>
+        </ul>
+        <div class="shot">Time your two halves to the two drags. Don't talk
+          over the drag itself — let the chart redraw.</div>
+      </div>
+      <div class="col say">
+        <div class="lbl">Say this — in your own words · voiceover</div>
+        <ul>
+          <li>Here's the thing a controller actually argues about: how hard to
+            push.</li>
+          <li>Slide left — protect train service. The work spreads over seven
+            days and uses no daytime windows at all.</li>
+          <li>Slide right — clear the urgent work. Same 18 jobs done in two
+            days, but now it's spending six daytime windows, and that costs
+            train paths.</li>
+          <li>Both of those are valid, optimal plans.</li>
+        </ul>
+        <div class="lands">
+          <div class="lbl2">The idea that has to land</div>
+          <q>The slider doesn't bend the rules — it sets the priority. The
+            controller decides; we just show what each choice costs.</q>
+        </div>
+      </div>
+    </div>
+
+    <!-- BEAT 6 -->
+    <div class="beat">
+      <div class="tc">
+        <div class="num">BEAT 6</div>
+        <div class="time mono">1:56</div>
+        <div class="dur mono">0:34</div>
+        <div class="chip c">C</div>
+      </div>
+      <div class="col screen">
+        <div class="lbl">On screen — clip supplied</div>
+        <p><code>raw\screen06_screen.mp4</code> · 34 s</p>
+        <ul style="margin-top:9px">
+          <li>Scenario C selected; mandatory mode switches itself on</li>
+          <li>Red panel appears with the explanation</li>
+          <li>Cursor moves down R01, R02, R03, then the closing note</li>
+        </ul>
+        <div class="shot">The strongest 30 seconds you have. Don't rush the
+          cut, and leave a beat of silence on the panel.</div>
+      </div>
+      <div class="col say">
+        <div class="lbl">Say this — in your own words · voiceover</div>
+        <ul>
+          <li>Sometimes the requests genuinely don't fit — and this is the part
+            we're proudest of.</li>
+          <li>Three emergency jobs, all on the Phulera–Jaipur section, all the
+            same night.</li>
+          <li>It doesn't say "no solution". It names them: 90 minutes each,
+            270 in total, and the window is 240.</li>
+          <li>Any two of them fit. All three can't. So there's no single
+            request to blame — the clash is genuinely three-way, and it worked
+            that out.</li>
+          <li>And notice the two requests on the other section aren't in the
+            list. They're not part of the problem, so it doesn't name them.</li>
+        </ul>
+        <div class="lands">
+          <div class="lbl2">The idea that has to land</div>
+          <q>A planner can act on this — defer one of the three. Nobody can act
+            on "no solution found".</q>
+        </div>
+      </div>
+    </div>
+
+    <!-- BEAT 7 -->
+    <div class="beat">
+      <div class="tc">
+        <div class="num">BEAT 7</div>
+        <div class="time mono">2:30</div>
+        <div class="dur mono">0:15</div>
+        <div class="chip c">C</div>
+      </div>
+      <div class="col screen">
+        <div class="lbl">On screen</div>
+        <p>Cut back to Presenter C, face to camera. Or hold on
+          <strong>slide 5 of the deck</strong> — the before/after Gantt.</p>
+        <div class="shot">Coming off the screen recording to a face here gives
+          the video a lift before the close.</div>
+      </div>
+      <div class="col say">
+        <div class="lbl">Say this — in your own words</div>
+        <ul>
+          <li>It works the same for one division or all 68 — no change to the
+            code.</li>
+          <li>The output feeds the eBlock workflow the railways already use, so
+            there's no retraining for field staff.</li>
+          <li>The whole stack is open source. No licensing cost.</li>
+          <li>Better-planned maintenance means healthier track — and that's
+            punctuality and safety for thirteen million passengers a day.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- BEAT 8 -->
+    <div class="beat">
+      <div class="tc">
+        <div class="num">BEAT 8</div>
+        <div class="time mono">2:45</div>
+        <div class="dur mono">0:12</div>
+        <div class="chip c">C</div>
+      </div>
+      <div class="col screen">
+        <div class="lbl">On screen</div>
+        <p>Presenter C to camera. Optional end card for the last 3 seconds:
+          team name, institute, PS number.</p>
+        <div class="shot">Hold the end card long enough to read — 3 seconds
+          minimum.</div>
+      </div>
+      <div class="col say">
+        <div class="lbl">Say this — in your own words</div>
+        <ul>
+          <li>Be straight about scope: what runs today is the solver, the
+            verified plans and three scenarios — and you've just watched it
+            work.</li>
+          <li>What's next is connecting it to the live TMS and BDMS feeds.</li>
+          <li>Sign off: Team Anomaly, Galgotias University, problem statement
+            SIH2026027.</li>
+        </ul>
+        <div class="lands">
+          <div class="lbl2">Why this beat exists</div>
+          <q>Judges have sat through a hundred videos overselling a prototype.
+            Being the team that says plainly what is and isn't built buys you
+            more credibility than another claim would.</q>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════ SHOOT ORDER ══════════════ -->
+<section>
+  <h2>Shoot order</h2>
+  <p class="h2note">Not the order of the script. Shoot to minimise resets.</p>
+
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Order</th><th>What</th><th>Who</th><th>Why now</th></tr></thead>
+      <tbody>
+        <tr><td>First</td><td>Everyone watches the three screen clips once</td>
+          <td>All</td>
+          <td>B and C need to know what they're narrating before they open
+            their mouths. Five minutes, saves twenty.</td></tr>
+        <tr><td>Then</td><td>All of Presenter A — beats 1, 2</td><td>A + crew</td>
+          <td>Room and framing set once per presenter.</td></tr>
+        <tr><td>Then</td><td>All of Presenter B — beat 3, plus voiceover for 4 and 5</td>
+          <td>B + crew</td>
+          <td>B records the demo voiceover watching the screen pass play back.</td></tr>
+        <tr><td>Last</td><td>All of Presenter C — beats 7, 8, plus voiceover for 6</td>
+          <td>C + crew</td>
+          <td>Same again. C narrates the conflict beat over the recorded screen.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Take plan</h3>
+  <ul>
+    <li>One full rehearsal out loud, timed, before anything is recorded.</li>
+    <li><strong>Three takes minimum per beat.</strong> They cost seconds; a
+      reshoot costs an evening.</li>
+    <li>Vary the wording each take. The best one is usually the second or
+      third, once the nerves drop.</li>
+    <li>If you fluff a word and correct yourself naturally — <strong>keep
+      it</strong>. It reads as genuine, which is the whole point.</li>
+  </ul>
+
+  <h3>Recording the screen</h3>
+  <ul>
+    <li>Windows has it built in: <code>Win + Alt + R</code> starts and stops.
+      <code>Win + G</code> opens the full Game Bar.</li>
+    <li>OBS Studio is better if anyone already knows it — use Window Capture on
+      the browser, not the whole desktop.</li>
+    <li>Record the <strong>browser window only</strong>. Taskbar, clock and
+      desktop icons should not appear.</li>
+    <li>Record at 1080p. It gets scaled down in the export.</li>
+  </ul>
+</section>
+
+<!-- ══════════════ EDIT ══════════════ -->
+<section>
+  <h2>Edit &amp; export</h2>
+  <p class="h2note">Editor owns this. Free tools: CapCut, Clipchamp (already on
+    Windows 11), or DaVinci Resolve.</p>
+
+  <h3>Assembly</h3>
+  <ul>
+    <li>Lay the beats down in order, 1 through 8.</li>
+    <li>Face-to-camera for beats 1, 2, 3, 7, 8. Screen recording with voice
+      underneath for 4, 5, 6.</li>
+    <li><strong>Cut on the handovers</strong> — A to B, B to C. Straight cuts,
+      no wipes or spins.</li>
+    <li>Optional: a small name-and-role caption the first time each presenter
+      appears. Nothing more.</li>
+    <li>Music is optional and risky. If you use any, keep it under −25 dB —
+      the voice has to stay completely clear.</li>
+    <li><strong>No AI voice, no AI avatar, no AI-generated footage.</strong></li>
+  </ul>
+
+  <h3>Export settings</h3>
+  <p>10 MB for 2:48 is about <strong>400 kbps total</strong>. Plan for it
+    rather than discovering it at the end.</p>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Setting</th><th>Value</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Resolution</td><td>1280 × 720</td>
+          <td>At this bitrate 1080p looks <em>worse</em>, not better — the
+            encoder has to throw away more.</td></tr>
+        <tr><td>Codec</td><td>H.264 / MP4</td><td>Universally accepted.</td></tr>
+        <tr><td>Video bitrate</td><td>~300 kbps</td><td>Leaves room for audio.</td></tr>
+        <tr><td>Audio</td><td>AAC 96 kbps</td><td>Plenty for speech.</td></tr>
+        <tr><td>Frame rate</td><td>30 fps</td><td>Match what you shot.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>If the export overshoots</h3>
+  <p>Two-pass ffmpeg targets the size far more reliably than an editor's
+    quality slider. Run it from the folder holding your export:</p>
+<pre><code>ffmpeg -y -i input.mp4 -c:v libx264 -b:v 300k -vf scale=1280:720 -pass 1 -an -f mp4 NUL</code></pre>
+<pre><code>ffmpeg -y -i input.mp4 -c:v libx264 -b:v 300k -vf scale=1280:720 -pass 2 -c:a aac -b:a 96k output.mp4</code></pre>
+  <p>Still over? Drop video to <code>250k</code>, or scale to
+    <code>960:540</code>. Check the file size before you upload.</p>
+
+  <div class="note">
+    <p><strong>Watch the finished file on a phone before uploading.</strong>
+      That is how a judge will most likely see it. If the Gantt labels aren't
+      readable on a phone, go back and raise the browser zoom — that is the fix,
+      not more bitrate.</p>
+  </div>
+</section>
+
+<!-- ══════════════ TIMELINE ══════════════ -->
+<section>
+  <h2>Shoot day</h2>
+  <p class="h2note">About two hours now that the screen footage is done.</p>
+  <div class="tl">
+    <div class="tlrow"><div class="t mono">0:00</div><div class="w">
+      <strong>Laptop prep and room setup</strong>
+      <span>Screen operator on the laptop, crew clearing and framing the room. 20 min.</span></div></div>
+    <div class="tlrow"><div class="t mono">0:20</div><div class="w">
+      <strong>Audio test — record and listen back</strong>
+      <span>Fan off. Ten seconds, on headphones. Do not skip. 10 min.</span></div></div>
+    <div class="tlrow"><div class="t mono">0:30</div><div class="w">
+      <strong>Watch the three screen clips together</strong>
+      <span>So B and C know exactly what they're narrating. 10 min.</span></div></div>
+    <div class="tlrow"><div class="t mono">0:40</div><div class="w">
+      <strong>Presenter A</strong>
+      <span>Beats 1–2, three takes each. 15 min.</span></div></div>
+    <div class="tlrow"><div class="t mono">0:55</div><div class="w">
+      <strong>Presenter B</strong>
+      <span>Beat 3 to camera, then voiceover for 4 and 5. 20 min.</span></div></div>
+    <div class="tlrow"><div class="t mono">1:15</div><div class="w">
+      <strong>Presenter C</strong>
+      <span>Beats 7–8 to camera, then voiceover for 6. 20 min.</span></div></div>
+    <div class="tlrow"><div class="t mono">1:35</div><div class="w">
+      <strong>Rough cut</strong>
+      <span>Editor assembles while everyone is still there to reshoot. 30 min.</span></div></div>
+    <div class="tlrow"><div class="t mono">2:05</div><div class="w">
+      <strong>Export, size check, phone check, upload</strong>
+      <span>Under 10 MB or it doesn't go.</span></div></div>
+  </div>
+</section>
+
+<!-- ══════════════ PITFALLS ══════════════ -->
+<section>
+  <h2>What sinks these videos</h2>
+  <ul>
+    <li><strong>Reading a script.</strong> Obvious on camera, and it's the one
+      thing the brief explicitly prohibits.</li>
+    <li><strong>Ninety seconds on the problem, twenty on the solution.</strong>
+      Flip it — the working demo is the reason you're ahead.</li>
+    <li><strong>Slides only, when you have working software.</strong> Most
+      teams at this stage have nothing to show. You do. Show it.</li>
+    <li><strong>Backlit faces and echoey rooms.</strong> Fixable in thirty
+      seconds beforehand, impossible afterwards.</li>
+    <li><strong>Claiming things that aren't built.</strong> Beat 8 exists to
+      stop this. One overclaim a judge catches costs more than the claim
+      gained.</li>
+    <li><strong>Running over three minutes.</strong> Cut a point rather than
+      talking faster.</li>
+    <li><strong>Unreadable screen text.</strong> Browser zoom. Every time.</li>
+  </ul>
+</section>
+
+<!-- ══════════════ CHECKLIST ══════════════ -->
+<section>
+  <h2>Final checklist</h2>
+  <div class="check">
+    <div class="ck"><div class="bx"></div><span>App runs on the recording laptop</span></div>
+    <div class="ck"><div class="bx"></div><span>Bookmarks bar hidden, one tab only</span></div>
+    <div class="ck"><div class="bx"></div><span>Browser zoom 110–125 %</span></div>
+    <div class="ck"><div class="bx"></div><span>Do Not Disturb on, apps quit</span></div>
+    <div class="ck"><div class="bx"></div><span>Fan and AC off, phone on airplane mode</span></div>
+    <div class="ck"><div class="bx"></div><span>Audio test recorded and listened back</span></div>
+    <div class="ck"><div class="bx"></div><span>Window in front of the presenter</span></div>
+    <div class="ck"><div class="bx"></div><span>Phone horizontal, at eye level</span></div>
+    <div class="ck"><div class="bx"></div><span>Folders made, take log started</span></div>
+    <div class="ck"><div class="bx"></div><span>All 8 beats shot, 3 takes each</span></div>
+    <div class="ck"><div class="bx"></div><span>Cut to 2:48 or under</span></div>
+    <div class="ck"><div class="bx"></div><span>Exported 720p H.264</span></div>
+    <div class="ck"><div class="bx"></div><span>File is under 10 MB</span></div>
+    <div class="ck"><div class="bx"></div><span>Watched end to end on a phone</span></div>
+    <div class="ck"><div class="bx"></div><span>No AI voice, footage, or recited script</span></div>
+    <div class="ck"><div class="bx"></div><span>Uploaded to the portal</span></div>
+  </div>
+</section>
+
+<footer>
+  Team Anomaly · Galgotias University · SIH 2026 · PS SIH2026027 — Automatic
+  Block Planning for Indian Railways. Demo lives in
+  <code>SIH\prototype</code>; run it with <code>streamlit run app.py</code>.
+</footer>
+
+</div>

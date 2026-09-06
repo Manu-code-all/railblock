@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Local runtime data — regenerate with `python -m railblock.seed`
+prototype/railblock.db
+prototype/st.log
+
+# Local tool/session config, not project source
+prototype/.agents/
+prototype/.claude/
+
+# Large raw video footage and borrowed reference clips — not part of
+# the demo deliverable. The finished MVP video lives in video/final/.
+video/raw/
+video/edit/
+reference/
+
+# OS cruft
+.DS_Store
+Thumbs.db

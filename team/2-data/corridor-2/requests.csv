@@ -1,0 +1,6 @@
+dept,section,title,duration_min,priority,deadline_day
+ENGG,SEC-A,"Rail grinding, km 12-18",180,4,3
+S&T,SEC-A,Point machine replacement,120,5,1
+TRD,SEC-A,OHE mast replacement,210,5,2
+ENGG,SEC-B,"Ballast cleaning, km 41-44",210,3,6
+S&T,SEC-B,Axle counter recalibration,90,4,4

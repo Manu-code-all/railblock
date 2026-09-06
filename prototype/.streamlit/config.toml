@@ -1,0 +1,19 @@
+# Pin the look so the demo is identical on any machine, whatever the
+# recorder's OS or browser theme is set to. Colours match the submitted deck.
+[theme]
+base = "light"
+primaryColor = "#1F3864"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F4F6FA"
+textColor = "#26303F"
+
+[client]
+# Hides the Deploy button and hamburger menu so they stay out of the
+# screen recording.
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false
+
+[server]
+headless = true

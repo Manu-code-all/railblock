@@ -14,6 +14,7 @@ import itertools
 from dataclasses import replace
 
 from railblock import DAY, scenarios, solve, verify
+from railblock.explain import as_text, explain
 from railblock.model import explain_conflict
 
 
@@ -155,6 +156,63 @@ def test_conflict_explanation_names_the_section_and_the_numbers():
     assert "Phulera" in why
     assert "270" in why          # what the three requests need
     assert "240" in why          # what the window can give
+
+
+# ══════════════════════════════════════════════════════════════════
+#  Claim: the per-block explanation is checked against the plan, not
+#  asserted — every reason and every window verdict must be real
+# ══════════════════════════════════════════════════════════════════
+def test_explanation_names_the_chosen_window_for_every_scheduled_block():
+    sc = scenarios.full_corridor()
+    sol = solve(sc)
+    wins = {w.id: w for w in sc.windows}
+    for b in sol.blocks:
+        why = explain(sc, sol, b.request)
+        assert why.scheduled
+        chosen = [a for a in why.alternatives if a.why == "chosen"]
+        assert len(chosen) == 1, b.request
+        assert chosen[0].window == b.window
+        assert chosen[0].ok
+        assert wins[chosen[0].window].day == b.day
+
+
+def test_explanation_lists_every_window_on_the_request_section_once():
+    sc = scenarios.full_corridor()
+    sol = solve(sc)
+    for r in sc.requests:
+        why = explain(sc, sol, r.id)
+        on_section = [w for w in sc.windows if w.section == r.section]
+        assert len(why.alternatives) == len(on_section), r.id
+        assert {a.window for a in why.alternatives} == {w.id for w in on_section}
+
+
+def test_explanation_for_the_dropped_request_names_the_two_that_beat_it():
+    """Scenario C, optimise mode: one of three SEC-A requests must give
+    way. Its explanation should name exactly the other two by id — not
+    a count, not a guess, the actual requests holding the window."""
+    sc = scenarios.overloaded()
+    sol = solve(sc)
+    dropped = sol.unscheduled[0]
+    holders = sorted(b.request for b in sol.blocks if b.section == "SEC-A")
+
+    why = explain(sc, sol, dropped)
+    assert not why.scheduled
+    assert len(why.alternatives) == 1               # SEC-A has one window
+    verdict = why.alternatives[0]
+    assert not verdict.ok
+    assert "held by" in verdict.why
+    for holder in holders:
+        assert holder in verdict.why
+
+
+def test_as_text_reproduces_the_headline_and_every_reason():
+    sc = scenarios.full_corridor()
+    sol = solve(sc)
+    why = explain(sc, sol, sol.blocks[0].request)
+    text = as_text(why)
+    assert why.headline in text
+    for reason in why.reasons:
+        assert reason in text
 
 
 # ══════════════════════════════════════════════════════════════════

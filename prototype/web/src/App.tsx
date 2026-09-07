@@ -38,6 +38,7 @@ export default function App() {
     await api.logout()
     setSession(null)
     setMeta(null)
+    setPage('dashboard')
   }
 
   if (session === 'checking') {

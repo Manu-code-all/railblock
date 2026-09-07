@@ -188,6 +188,14 @@ def list_requests(status: Optional[str] = None, user: dict = Depends(current_use
 def submit_request(body: NewRequest, user: dict = Depends(require_department)):
     if not body.title.strip():
         raise HTTPException(400, "Give the work a title.")
+    if body.section not in {s.id for s in store.sections()}:
+        raise HTTPException(400, f"'{body.section}' isn't a section in this corridor.")
+    if body.duration <= 0:
+        raise HTTPException(400, "Duration must be a positive number of minutes.")
+    if not 1 <= body.priority <= 5:
+        raise HTTPException(400, "Priority must be between 1 (routine) and 5 (safety-critical).")
+    if body.deadline_day < 0:
+        raise HTTPException(400, "Deadline day can't be before the corridor's first day.")
     windows = [w for w in store.windows() if w.section == body.section]
     longest = max((w.length for w in windows), default=0)
     rid = store.add_request(
@@ -296,7 +304,10 @@ def create_plan(params: SolveParams, user: dict = Depends(require_controller)):
 
 @app.post("/api/plans/{pid}/publish")
 def publish_plan(pid: int, user: dict = Depends(require_controller)):
-    store.publish_plan(pid, user["username"])
+    try:
+        store.publish_plan(pid, user["username"])
+    except ValueError as e:
+        raise HTTPException(404, str(e))
     return {"ok": True}
 
 

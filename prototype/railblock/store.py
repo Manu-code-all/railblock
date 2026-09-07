@@ -379,6 +379,8 @@ def save_plan(solution, days: int, urgency: float, strict: bool,
 def publish_plan(pid: int, actor: str, path=None) -> None:
     """Make a plan the live block order and mark its requests planned."""
     with connect(path) as con:
+        if con.execute("SELECT 1 FROM plans WHERE id = ?", (pid,)).fetchone() is None:
+            raise ValueError(f"No plan #{pid}.")
         con.execute("UPDATE plans SET status = 'draft' WHERE status = 'published'")
         con.execute("UPDATE plans SET status = 'published' WHERE id = ?", (pid,))
         rids = [r["request_id"] for r in con.execute(
